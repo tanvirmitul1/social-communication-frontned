@@ -11,7 +11,7 @@ import {
 } from "@/lib/store/slices/messages.slice";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
 import { resetUnreadCount } from "@/lib/store/slices/conversations.slice";
-import { MessageCircle, Users, Phone, Settings, Moon, Sun, Menu, Search, Plus } from "lucide-react";
+import { MessageCircle, Users, Phone, Settings, Moon, Sun, Menu, Search, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +21,10 @@ import { getInitials } from "@/lib/utils/format";
 import { ConversationItem } from "@/components/messages/conversation-item";
 import { MessageThread } from "@/components/messages/message-thread";
 import { MessageInput } from "@/components/messages/message-input";
+import { NewConversationModal } from "@/components/messages/new-conversation-modal";
+import { CreateGroupModal } from "@/components/messages/create-group-modal";
+import { AddMembersModal } from "@/components/messages/add-members-modal";
+import { UserMenu } from "@/components/shared/user-menu";
 import { socketManager } from "@/lib/socket/socket-manager";
 import type { SendMessagePayload } from "@/types";
 
@@ -34,6 +38,9 @@ export default function MessagesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"messages" | "groups" | "calls">("messages");
   const [searchQuery, setSearchQuery] = useState("");
+  const [newConversationOpen, setNewConversationOpen] = useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [addMembersOpen, setAddMembersOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -150,20 +157,8 @@ export default function MessagesPage() {
 
             {/* User Profile */}
             {user && (
-              <div className="flex items-center gap-3 border-b border-border p-4">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={user.avatar || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {getInitials(user.username)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 overflow-hidden">
-                  <p className="truncate font-semibold">{user.username}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {user.statusMessage || "Available"}
-                  </p>
-                </div>
-                <div className="h-3 w-3 rounded-full bg-green-500" />
+              <div className="border-b border-border p-4">
+                <UserMenu />
               </div>
             )}
 
@@ -226,7 +221,7 @@ export default function MessagesPage() {
                     <p className="mb-4 text-sm text-muted-foreground">
                       Start a new conversation to get started
                     </p>
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => setNewConversationOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" />
                       New Message
                     </Button>
@@ -285,6 +280,16 @@ export default function MessagesPage() {
               <h2 className="text-lg font-semibold">Welcome to Social Communication</h2>
             )}
           </div>
+          {activeConv && activeConv.type === "group" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddMembersOpen(true)}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Members
+            </Button>
+          )}
         </div>
 
         {/* Messages or Empty State */}
@@ -319,11 +324,11 @@ export default function MessagesPage() {
                 your contacts.
               </p>
               <div className="flex justify-center gap-3">
-                <Button>
+                <Button onClick={() => setNewConversationOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   New Conversation
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => setCreateGroupOpen(true)}>
                   <Users className="mr-2 h-4 w-4" />
                   Create Group
                 </Button>
@@ -332,6 +337,25 @@ export default function MessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <NewConversationModal
+        open={newConversationOpen}
+        onOpenChange={setNewConversationOpen}
+      />
+      <CreateGroupModal
+        open={createGroupOpen}
+        onOpenChange={setCreateGroupOpen}
+      />
+      {activeConv && activeConv.type === "group" && (
+        <AddMembersModal
+          open={addMembersOpen}
+          onOpenChange={setAddMembersOpen}
+          groupId={activeConv.id}
+          groupTitle={activeConv.title}
+          existingMemberIds={activeConv.participants}
+        />
+      )}
     </div>
   );
 }
