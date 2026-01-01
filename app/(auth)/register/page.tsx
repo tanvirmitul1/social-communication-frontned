@@ -41,11 +41,15 @@ export default function RegisterPage() {
         password: data.password,
       }).unwrap();
 
-      // Update Redux state with the user info (redux-persist will handle storage)
-      if (result?.user) {
-        dispatch(setUser(result.user));
-      }
-      
+      // Update Redux state with user and tokens (redux-persist will handle storage)
+      dispatch(
+        setUser({
+          user: result.data.user,
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
+        })
+      );
+
       setSuccess(true);
 
       // Redirect to login after 2 seconds
@@ -81,9 +85,7 @@ export default function RegisterPage() {
             <p className="text-muted-foreground mb-4">
               Your account has been successfully created.
             </p>
-            <p className="text-sm text-muted-foreground">
-              Redirecting to login page...
-            </p>
+            <p className="text-sm text-muted-foreground">Redirecting to login page...</p>
           </div>
         </div>
       </div>
@@ -139,9 +141,7 @@ export default function RegisterPage() {
                 {...register("email")}
                 className={errors.email ? "border-destructive" : ""}
               />
-              {errors.email && (
-                <p className="text-destructive text-sm">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
             </div>
 
             {/* Password Field */}

@@ -36,9 +36,15 @@ export default function LoginPage() {
     try {
       const result = await loginMutation(data).unwrap();
       if (result) {
-        // Update Redux state (redux-persist will handle storage)
-        dispatch(setUser(result.user));
-        
+        // Update Redux state with user and tokens (redux-persist will handle storage)
+        dispatch(
+          setUser({
+            user: result.data.user,
+            accessToken: result.data.accessToken,
+            refreshToken: result.data.refreshToken,
+          })
+        );
+
         router.push("/messages");
       }
     } catch (err: unknown) {
@@ -94,19 +100,14 @@ export default function LoginPage() {
                 {...register("email")}
                 className={errors.email ? "border-destructive" : ""}
               />
-              {errors.email && (
-                <p className="text-destructive text-sm">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>

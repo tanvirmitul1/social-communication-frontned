@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/store";
 import { useGetCurrentUserQuery } from "@/lib/api";
 import { setUser } from "@/lib/store/slices/auth.slice";
+import { storage } from "@/lib/utils/storage";
+import { STORAGE_KEYS } from "@/lib/constants";
 import { fetchUserGroups } from "@/lib/store/slices/conversations.slice";
 import {
   fetchDirectMessages,
@@ -12,7 +14,18 @@ import {
 } from "@/lib/store/slices/messages.slice";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
 import { resetUnreadCount } from "@/lib/store/slices/conversations.slice";
-import { MessageCircle, Users, Phone, Settings, Moon, Sun, Menu, Search, Plus, UserPlus } from "lucide-react";
+import {
+  MessageCircle,
+  Users,
+  Phone,
+  Settings,
+  Moon,
+  Sun,
+  Menu,
+  Search,
+  Plus,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,13 +56,24 @@ export default function MessagesPage() {
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [addMembersOpen, setAddMembersOpen] = useState(false);
 
-  const { data: currentUser, isLoading, error } = useGetCurrentUserQuery(undefined, {
+  const {
+    data: currentUser,
+    isLoading,
+    error,
+  } = useGetCurrentUserQuery(undefined, {
     skip: !!user, // Skip if user is already in state
   });
 
   useEffect(() => {
     if (currentUser && !user) {
-      dispatch(setUser(currentUser));
+      // For getCurrentUser, we only update the user info
+      dispatch(
+        setUser({
+          user: currentUser,
+          accessToken: storage.get<string>(STORAGE_KEYS.ACCESS_TOKEN) || "",
+          refreshToken: storage.get<string>(STORAGE_KEYS.REFRESH_TOKEN) || "",
+        })
+      );
     }
   }, [currentUser, user, dispatch]);
 
@@ -131,7 +155,9 @@ export default function MessagesPage() {
   });
 
   const activeConv = conversations.find((c) => c.id === activeConversation);
-  const currentMessages = activeConversation ? messagesByConversation[activeConversation] || [] : [];
+  const currentMessages = activeConversation
+    ? messagesByConversation[activeConversation] || []
+    : [];
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -152,11 +178,7 @@ export default function MessagesPage() {
                 <h1 className="text-xl font-bold">Messages</h1>
               </div>
               <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
+                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
             </div>
 
@@ -259,11 +281,7 @@ export default function MessagesPage() {
         {/* Header */}
         <div className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <Menu className="h-5 w-5" />
             </Button>
             {activeConv ? (
@@ -286,11 +304,7 @@ export default function MessagesPage() {
             )}
           </div>
           {activeConv && activeConv.type === "group" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAddMembersOpen(true)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setAddMembersOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Add Members
             </Button>
@@ -344,14 +358,8 @@ export default function MessagesPage() {
       </div>
 
       {/* Modals */}
-      <NewConversationModal
-        open={newConversationOpen}
-        onOpenChange={setNewConversationOpen}
-      />
-      <CreateGroupModal
-        open={createGroupOpen}
-        onOpenChange={setCreateGroupOpen}
-      />
+      <NewConversationModal open={newConversationOpen} onOpenChange={setNewConversationOpen} />
+      <CreateGroupModal open={createGroupOpen} onOpenChange={setCreateGroupOpen} />
       {activeConv && activeConv.type === "group" && (
         <AddMembersModal
           open={addMembersOpen}

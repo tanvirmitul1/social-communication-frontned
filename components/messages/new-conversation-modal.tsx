@@ -33,7 +33,11 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
   const [searchError, setSearchError] = useState<string | null>(null);
 
   // RTK Query hook
-  const { data: searchResultsData, isFetching: isSearching, error } = useSearchUsersQuery(
+  const {
+    data: searchResultsData,
+    isFetching: isSearching,
+    error,
+  } = useSearchUsersQuery(
     { query: searchQuery, page: 1, limit: 20 },
     { skip: !searchQuery.trim() }
   );
@@ -79,9 +83,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>New Conversation</DialogTitle>
-          <DialogDescription>
-            Search for users to start a conversation
-          </DialogDescription>
+          <DialogDescription>Search for users to start a conversation</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -143,9 +145,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
                         </p>
                       )}
                     </div>
-                    {user.isOnline && (
-                      <div className="h-3 w-3 rounded-full bg-green-500" />
-                    )}
+                    {user.isOnline && <div className="h-3 w-3 rounded-full bg-green-500" />}
                   </button>
                 ))}
               </div>
@@ -155,9 +155,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
                   <p className="text-sm text-muted-foreground">
                     No users found matching &quot;{searchQuery}&quot;
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Try a different search term
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">Try a different search term</p>
                 </div>
               </div>
             ) : !searchQuery ? (

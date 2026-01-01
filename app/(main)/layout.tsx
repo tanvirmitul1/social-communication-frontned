@@ -30,9 +30,5 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }
   }, [socket]);
 
-  return (
-    <div className="h-screen w-screen overflow-hidden bg-background">
-      {children}
-    </div>
-  );
+  return <div className="h-screen w-screen overflow-hidden bg-background">{children}</div>;
 }

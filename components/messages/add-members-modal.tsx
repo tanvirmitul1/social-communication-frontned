@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  useSearchUsersQuery,
-  useAddMemberMutation,
-} from "@/lib/api";
+import { useSearchUsersQuery, useAddMemberMutation } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -50,11 +47,10 @@ export function AddMembersModal({
   const [addMember] = useAddMemberMutation();
 
   // Get search results and filter out existing members and already added members
-  const searchResults = searchResultsData?.data?.data?.filter(
-    (user: User) =>
-      !existingMemberIds.includes(user.id) &&
-      !addedMembers.includes(user.id)
-  ) || [];
+  const searchResults =
+    searchResultsData?.data?.data?.filter(
+      (user: User) => !existingMemberIds.includes(user.id) && !addedMembers.includes(user.id)
+    ) || [];
 
   const handleAddMember = async (user: User) => {
     setIsAdding(true);
@@ -93,9 +89,7 @@ export function AddMembersModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Members</DialogTitle>
-          <DialogDescription>
-            Add new members to {groupTitle}
-          </DialogDescription>
+          <DialogDescription>Add new members to {groupTitle}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -120,24 +114,15 @@ export function AddMembersModal({
                   className="pl-9"
                 />
               </div>
-              <Button
-                disabled={isSearching || !searchQuery.trim()}
-                size="sm"
-              >
-                {isSearching ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Search"
-                )}
+              <Button disabled={isSearching || !searchQuery.trim()} size="sm">
+                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
               </Button>
             </div>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
           )}
 
           {/* Search Results */}
@@ -163,11 +148,7 @@ export function AddMembersModal({
                         </p>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddMember(user)}
-                      disabled={isAdding}
-                    >
+                    <Button size="sm" onClick={() => handleAddMember(user)} disabled={isAdding}>
                       {isAdding ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (

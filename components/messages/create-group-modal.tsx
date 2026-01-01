@@ -4,11 +4,7 @@ import { useState } from "react";
 import { useAppDispatch } from "@/lib/store";
 import { addConversation } from "@/lib/store/slices/conversations.slice";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
-import {
-  useSearchUsersQuery,
-  useCreateGroupMutation,
-  useAddMemberMutation,
-} from "@/lib/api";
+import { useSearchUsersQuery, useCreateGroupMutation, useAddMemberMutation } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -50,9 +46,10 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
   const [addMember] = useAddMemberMutation();
 
   // Get search results and filter out selected members
-  const searchResults = searchResultsData?.data?.data?.filter(
-    (user: User) => !selectedMembers.find((m) => m.id === user.id)
-  ) || [];
+  const searchResults =
+    searchResultsData?.data?.data?.filter(
+      (user: User) => !selectedMembers.find((m) => m.id === user.id)
+    ) || [];
 
   const handleAddMember = (user: User) => {
     setSelectedMembers([...selectedMembers, user]);
@@ -137,9 +134,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create Group</DialogTitle>
-          <DialogDescription>
-            Create a new group chat and add members
-          </DialogDescription>
+          <DialogDescription>Create a new group chat and add members</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -234,16 +229,8 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
                   className="pl-9"
                 />
               </div>
-              <Button
-                type="button"
-                disabled={isSearching || !searchQuery.trim()}
-                size="sm"
-              >
-                {isSearching ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Search"
-                )}
+              <Button type="button" disabled={isSearching || !searchQuery.trim()} size="sm">
+                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
               </Button>
             </div>
 
@@ -273,9 +260,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
 
           {/* Error Message */}
           {error && (
-            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
           )}
         </div>
 
