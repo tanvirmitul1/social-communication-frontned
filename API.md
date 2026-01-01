@@ -2,8 +2,8 @@
 
 Enterprise-level real-time messaging and audio/video calling platform API documentation.
 
-**Base URL**: `http://localhost:3000/api/v1` (Development)
-**Swagger UI**: `http://localhost:3000/api/docs`
+**Base URL**: `http://40.233.122.142/api/v1` (Development)
+**Swagger UI**: `http://40.233.122.142/api/docs`
 
 ## Table of Contents
 
@@ -1134,7 +1134,7 @@ Prometheus-compatible metrics.
 
 ## WebSocket Events
 
-Connect to WebSocket server: `ws://localhost:3000` or `http://localhost:3000`
+Connect to WebSocket server: `ws://40.233.122.142` or `http://40.233.122.142`
 
 ### Connection
 
@@ -1143,7 +1143,7 @@ Connect to WebSocket server: `ws://localhost:3000` or `http://localhost:3000`
 ```javascript
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3000', {
+const socket = io('http://40.233.122.142', {
   auth: {
     token: 'your-jwt-access-token',
   },
@@ -1153,7 +1153,7 @@ const socket = io('http://localhost:3000', {
 Or using headers:
 
 ```javascript
-const socket = io('http://localhost:3000', {
+const socket = io('http://40.233.122.142', {
   extraHeaders: {
     authorization: 'Bearer your-jwt-access-token',
   },
@@ -1772,7 +1772,7 @@ Tokens contain:
 import axios from 'axios';
 import io from 'socket.io-client';
 
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = 'http://40.233.122.142/api/v1';
 
 // REST API Client
 class APIClient {
@@ -1811,7 +1811,7 @@ class APIClient {
 class SocketClient {
   constructor() {
     const token = localStorage.getItem('accessToken');
-    this.socket = io('http://localhost:3000', {
+    this.socket = io('http://40.233.122.142', {
       auth: { token },
     });
 

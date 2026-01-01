@@ -95,8 +95,8 @@ social-communication-frontend/
 
    Update the values in `.env.local`:
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
-   NEXT_PUBLIC_WS_URL=http://localhost:3000
+   NEXT_PUBLIC_API_URL=http://40.233.122.142/api/v1
+   NEXT_PUBLIC_WS_URL=http://40.233.122.142
    NEXT_PUBLIC_APP_URL=http://localhost:3001
    NEXTAUTH_URL=http://localhost:3001
    NEXTAUTH_SECRET=your-secret-key-here
