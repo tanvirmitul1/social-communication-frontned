@@ -5,6 +5,8 @@ import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { useLogoutMutation } from "@/lib/api";
 import { clearAuth } from "@/lib/store/slices/auth.slice";
 import { socketManager } from "@/lib/socket/socket-manager";
+import { storage } from "@/lib/utils/storage";
+import { STORAGE_KEYS } from "@/lib/constants";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +30,13 @@ export function UserMenu() {
       // Disconnect WebSocket
       socketManager.disconnect();
 
-      // Call logout API
-      await logoutMutation(undefined).unwrap();
+      // Get refresh token from storage
+      const refreshToken = storage.get<string>(STORAGE_KEYS.REFRESH_TOKEN);
+
+      // Call logout API with refresh token
+      if (refreshToken) {
+        await logoutMutation(refreshToken).unwrap();
+      }
 
       // Clear Redux state (redux-persist will handle storage cleanup)
       dispatch(clearAuth());
