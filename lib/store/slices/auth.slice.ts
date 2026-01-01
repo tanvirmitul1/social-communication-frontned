@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { authApiSlice } from "@/lib/api";
 import { storage } from "@/lib/utils/storage";
 import { STORAGE_KEYS } from "@/lib/constants";
 import type { User } from "@/types";
