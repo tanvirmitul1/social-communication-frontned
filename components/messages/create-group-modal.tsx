@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useAppDispatch } from "@/lib/store";
 import { addConversation } from "@/lib/store/slices/conversations.slice";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
-import { groupsService, usersService } from "@/lib/api";
+import {
+  useSearchUsersQuery,
+  useCreateGroupMutation,
+  useAddMemberMutation,
+} from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -33,36 +37,25 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
   const [groupDescription, setGroupDescription] = useState("");
   const [groupType, setGroupType] = useState<"PRIVATE" | "PUBLIC" | "SECRET">("PRIVATE");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<User[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  // RTK Query hooks
+  const { data: searchResultsData, isFetching: isSearching } = useSearchUsersQuery(
+    { query: searchQuery, page: 1, limit: 20 },
+    { skip: !searchQuery.trim() }
+  );
+  const [createGroup] = useCreateGroupMutation();
+  const [addMember] = useAddMemberMutation();
 
-    setIsSearching(true);
-    setError(null);
-
-    try {
-      const response = await usersService.searchUsers(searchQuery);
-      const results = response.data?.data || [];
-      // Filter out already selected members
-      const filtered = results.filter(
-        (user) => !selectedMembers.find((m) => m.id === user.id)
-      );
-      setSearchResults(filtered);
-    } catch (err) {
-      setError("Failed to search users");
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  // Get search results and filter out selected members
+  const searchResults = searchResultsData?.data?.data?.filter(
+    (user: User) => !selectedMembers.find((m) => m.id === user.id)
+  ) || [];
 
   const handleAddMember = (user: User) => {
     setSelectedMembers([...selectedMembers, user]);
-    setSearchResults(searchResults.filter((u) => u.id !== user.id));
     setSearchQuery("");
   };
 
@@ -86,44 +79,45 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
 
     try {
       // Create the group
-      const response = await groupsService.createGroup({
+      const groupResponse = await createGroup({
         title: groupTitle,
         description: groupDescription || undefined,
         type: groupType,
-      });
-
-      const group = response.data!;
+      }).unwrap();
 
       // Add members to the group
       await Promise.all(
         selectedMembers.map((member) =>
-          groupsService.addMember(group.id, member.id, "MEMBER")
+          addMember({
+            groupId: groupResponse.id,
+            userId: member.id,
+            role: "MEMBER",
+          }).unwrap()
         )
       );
 
       // Create conversation from group
       const conversation = {
-        id: group.id,
+        id: groupResponse.id,
         type: "group" as const,
-        title: group.title,
-        avatar: group.cover || null,
+        title: groupResponse.title,
+        avatar: groupResponse.cover || null,
         participants: selectedMembers.map((m) => m.id),
         lastMessage: null,
         unreadCount: 0,
         isOnline: false,
         isTyping: false,
-        updatedAt: group.updatedAt,
+        updatedAt: groupResponse.updatedAt,
       };
 
       dispatch(addConversation(conversation));
-      dispatch(setActiveConversation(group.id));
+      dispatch(setActiveConversation(groupResponse.id));
 
       // Reset and close
       setGroupTitle("");
       setGroupDescription("");
       setGroupType("PRIVATE");
       setSelectedMembers([]);
-      setSearchResults([]);
       onOpenChange(false);
     } catch (err) {
       setError("Failed to create group. Please try again.");
@@ -134,7 +128,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && e.currentTarget.name === "search") {
-      handleSearch();
+      e.preventDefault(); // Prevent form submission
     }
   };
 
@@ -242,7 +236,6 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
               </div>
               <Button
                 type="button"
-                onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
                 size="sm"
               >
@@ -258,7 +251,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
             {searchResults.length > 0 && (
               <ScrollArea className="h-[150px] rounded-lg border border-border">
                 <div className="space-y-1 p-2">
-                  {searchResults.map((user) => (
+                  {searchResults.map((user: User) => (
                     <button
                       key={user.id}
                       onClick={() => handleAddMember(user)}

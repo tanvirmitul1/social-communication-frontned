@@ -1,33 +1,44 @@
-/**
- * Redux store configuration
- */
-
 import { configureStore } from "@reduxjs/toolkit";
+import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist";
+import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 // Reducers
-import authReducer from "./slices/auth.slice";
+import authReducer, { type AuthState } from "./slices/auth.slice";
 import messagesReducer from "./slices/messages.slice";
 import conversationsReducer from "./slices/conversations.slice";
 import uiReducer from "./slices/ui.slice";
+import { apiSlice } from "../api/api.slice";
+
+// Persist config for auth slice
+const authPersistConfig: import("redux-persist").PersistConfig<AuthState> = {
+  key: "auth",
+  storage,
+  whitelist: ["user", "isAuthenticated", "accessToken", "refreshToken"], // persist auth fields
+};
+
+const persistedAuthReducer = persistReducer(authPersistConfig, authReducer);
 
 export const store = configureStore({
   reducer: {
-    auth: authReducer,
+    auth: persistedAuthReducer,
     messages: messagesReducer,
     conversations: conversationsReducer,
     ui: uiReducer,
+    [apiSlice.reducerPath]: apiSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these paths in the state for serialization checks
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER, "messages/setTyping"],
         ignoredPaths: ["messages.typingUsers"],
-        ignoredActions: ["messages/setTyping"],
       },
-    }),
+    }).concat(apiSlice.middleware),
   devTools: process.env.NODE_ENV !== "production",
 });
+
+export const persistor = persistStore(store);
 
 // Types
 export type RootState = ReturnType<typeof store.getState>;
@@ -37,8 +48,14 @@ export type AppDispatch = typeof store.dispatch;
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-// Selectors
-export const selectAuth = (state: RootState) => state.auth;
-export const selectMessages = (state: RootState) => state.messages;
-export const selectConversations = (state: RootState) => state.conversations;
-export const selectUI = (state: RootState) => state.ui;
+// Rehydration handling
+export const rehydrateAuth = (callback: (authState: AuthState) => void) => {
+  const unsubscribe = store.subscribe(() => {
+    const authState = store.getState().auth;
+    if (authState && authState.accessToken !== undefined) {
+      // Auth state has been rehydrated
+      callback(authState);
+      unsubscribe(); // Unsubscribe after first call
+    }
+  });
+};

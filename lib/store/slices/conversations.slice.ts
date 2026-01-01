@@ -3,7 +3,7 @@
  */
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { messagesService, groupsService, usersService } from "@/lib/api";
+import { groupApiSlice, userApiSlice } from "@/lib/api";
 import type { Conversation, Message, Group, User } from "@/types";
 
 interface ConversationsState {
@@ -51,16 +51,24 @@ function createConversationFromUser(user: User): Conversation {
 }
 
 // Async thunks
-export const fetchUserGroups = createAsyncThunk("conversations/fetchUserGroups", async () => {
-  const response = await groupsService.getUserGroups();
-  return response.data?.data || [];
+export const fetchUserGroups = createAsyncThunk("conversations/fetchUserGroups", async (_, { dispatch }) => {
+  const result = await dispatch(groupApiSlice.endpoints.getUserGroups.initiate({ page: 1, limit: 20 }));
+  if ('data' in result) {
+    return result.data.data?.data || [];
+  } else {
+    throw new Error('Failed to fetch user groups');
+  }
 });
 
 export const searchUsers = createAsyncThunk(
   "conversations/searchUsers",
-  async (query: string) => {
-    const response = await usersService.searchUsers(query);
-    return response.data?.data || [];
+  async (query: string, { dispatch }) => {
+    const result = await dispatch(userApiSlice.endpoints.searchUsers.initiate({ query, page: 1, limit: 20 }));
+    if ('data' in result) {
+      return result.data.data?.data || [];
+    } else {
+      throw new Error('Failed to search users');
+    }
   }
 );
 
@@ -153,7 +161,7 @@ const conversationsSlice = createSlice({
         const groupConversations = action.payload.map(createConversationFromGroup);
 
         // Merge with existing conversations, avoiding duplicates
-        groupConversations.forEach((conversation) => {
+        groupConversations.forEach((conversation: Conversation) => {
           const exists = state.conversations.some((c) => c.id === conversation.id);
           if (!exists) {
             state.conversations.push(conversation);

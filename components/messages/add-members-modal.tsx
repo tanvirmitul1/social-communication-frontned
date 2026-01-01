@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { groupsService, usersService } from "@/lib/api";
+import {
+  useSearchUsersQuery,
+  useAddMemberMutation,
+} from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -35,43 +38,35 @@ export function AddMembersModal({
   existingMemberIds = [],
 }: AddMembersModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addedMembers, setAddedMembers] = useState<string[]>([]);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  // RTK Query hooks
+  const { data: searchResultsData, isFetching: isSearching } = useSearchUsersQuery(
+    { query: searchQuery, page: 1, limit: 20 },
+    { skip: !searchQuery.trim() }
+  );
+  const [addMember] = useAddMemberMutation();
 
-    setIsSearching(true);
-    setError(null);
-
-    try {
-      const response = await usersService.searchUsers(searchQuery);
-      const results = response.data?.data || [];
-      // Filter out existing members and already added members
-      const filtered = results.filter(
-        (user) =>
-          !existingMemberIds.includes(user.id) &&
-          !addedMembers.includes(user.id)
-      );
-      setSearchResults(filtered);
-    } catch (err) {
-      setError("Failed to search users");
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  // Get search results and filter out existing members and already added members
+  const searchResults = searchResultsData?.data?.data?.filter(
+    (user: User) =>
+      !existingMemberIds.includes(user.id) &&
+      !addedMembers.includes(user.id)
+  ) || [];
 
   const handleAddMember = async (user: User) => {
     setIsAdding(true);
     setError(null);
 
     try {
-      await groupsService.addMember(groupId, user.id, "MEMBER");
+      await addMember({
+        groupId,
+        userId: user.id,
+        role: "MEMBER",
+      }).unwrap();
       setAddedMembers([...addedMembers, user.id]);
-      setSearchResults(searchResults.filter((u) => u.id !== user.id));
       setSearchQuery("");
     } catch (err) {
       setError(`Failed to add ${user.username} to the group`);
@@ -82,7 +77,6 @@ export function AddMembersModal({
 
   const handleClose = () => {
     setSearchQuery("");
-    setSearchResults([]);
     setAddedMembers([]);
     setError(null);
     onOpenChange(false);
@@ -90,7 +84,7 @@ export function AddMembersModal({
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleSearch();
+      e.preventDefault(); // Prevent form submission
     }
   };
 
@@ -127,7 +121,6 @@ export function AddMembersModal({
                 />
               </div>
               <Button
-                onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
                 size="sm"
               >
@@ -151,7 +144,7 @@ export function AddMembersModal({
           <ScrollArea className="h-[300px]">
             {searchResults.length > 0 ? (
               <div className="space-y-2">
-                {searchResults.map((user) => (
+                {searchResults.map((user: User) => (
                   <div
                     key={user.id}
                     className="flex items-center gap-3 rounded-lg border border-border p-3"
@@ -191,7 +184,7 @@ export function AddMembersModal({
               <div className="flex h-full items-center justify-center text-center">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    No users found matching "{searchQuery}"
+                    No users found matching &quot;{searchQuery}&quot;
                   </p>
                 </div>
               </div>

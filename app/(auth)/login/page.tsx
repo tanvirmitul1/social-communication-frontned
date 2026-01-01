@@ -37,7 +37,14 @@ export default function LoginPage() {
         router.push("/messages");
       }
     } catch (err) {
-      setError(err as string);
+      // Handle error based on type
+      if (typeof err === "string") {
+        setError(err);
+      } else if (err && typeof err === "object" && "message" in err) {
+        setError(err.message as string);
+      } else {
+        setError("An error occurred during login. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

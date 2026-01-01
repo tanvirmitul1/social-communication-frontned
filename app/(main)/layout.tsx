@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/lib/api";
+import { useAppSelector } from "@/lib/store";
 import { useSocket } from "@/lib/socket";
 import { useMessageEvents } from "@/lib/socket/use-message-events";
 import { useConversationEvents } from "@/lib/socket/use-conversation-events";
@@ -10,6 +10,7 @@ import { useConversationEvents } from "@/lib/socket/use-conversation-events";
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const socket = useSocket();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   // Initialize WebSocket event listeners
   useMessageEvents();
@@ -17,10 +18,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     // Check authentication
-    if (!authService.isAuthenticated()) {
+    if (!isAuthenticated) {
       router.replace("/login");
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   // Socket will auto-connect via useSocket hook
   useEffect(() => {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store";
 import { addConversation } from "@/lib/store/slices/conversations.slice";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
-import { usersService } from "@/lib/api";
+import { useSearchUsersQuery } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -30,26 +30,22 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
   const dispatch = useAppDispatch();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  // RTK Query hook
+  const { data: searchResultsData, isFetching: isSearching, error } = useSearchUsersQuery(
+    { query: searchQuery, page: 1, limit: 20 },
+    { skip: !searchQuery.trim() }
+  );
 
-    setIsSearching(true);
+  const searchResults = searchResultsData?.data?.data || [];
+
+  // Handle error from RTK Query
+  if (error && searchQuery.trim()) {
+    setSearchError("Failed to search users. Please try again.");
+  } else if (searchResultsData && !error) {
     setSearchError(null);
-
-    try {
-      const response = await usersService.searchUsers(searchQuery);
-      setSearchResults(response.data?.data || []);
-    } catch (error) {
-      setSearchError("Failed to search users. Please try again.");
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  }
 
   const handleStartConversation = (user: User) => {
     // Create a new conversation
@@ -70,12 +66,11 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
     dispatch(setActiveConversation(user.id));
     onOpenChange(false);
     setSearchQuery("");
-    setSearchResults([]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleSearch();
+      e.preventDefault(); // Prevent form submission
     }
   };
 
@@ -102,7 +97,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
                 className="pl-9"
               />
             </div>
-            <Button onClick={handleSearch} disabled={isSearching || !searchQuery.trim()}>
+            <Button disabled={isSearching || !searchQuery.trim()}>
               {isSearching ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -125,7 +120,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
           <ScrollArea className="h-[300px]">
             {searchResults.length > 0 ? (
               <div className="space-y-2">
-                {searchResults.map((user) => (
+                {searchResults.map((user: User) => (
                   <button
                     key={user.id}
                     onClick={() => handleStartConversation(user)}
@@ -158,7 +153,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
               <div className="flex h-full items-center justify-center text-center">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    No users found matching "{searchQuery}"
+                    No users found matching &quot;{searchQuery}&quot;
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Try a different search term

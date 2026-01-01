@@ -3,7 +3,7 @@
  */
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { messagesService } from "@/lib/api";
+import { messageApiSlice } from "@/lib/api";
 import type { Message, SendMessagePayload } from "@/types";
 
 interface MessagesState {
@@ -26,26 +26,38 @@ const initialState: MessagesState = {
 // Async thunks
 export const fetchGroupMessages = createAsyncThunk(
   "messages/fetchGroupMessages",
-  async ({ groupId, page = 1, limit = 50 }: { groupId: string; page?: number; limit?: number }) => {
-    const response = await messagesService.getGroupMessages(groupId, page, limit);
-    return { conversationId: groupId, messages: response.data || [] };
+  async ({ groupId, page = 1, limit = 50 }: { groupId: string; page?: number; limit?: number }, { dispatch }) => {
+    const result = await dispatch(messageApiSlice.endpoints.getGroupMessages.initiate({ groupId, page, limit }));
+    if ('data' in result) {
+      return { conversationId: groupId, messages: result.data.data?.data || [] };
+    } else {
+      throw new Error('Failed to fetch group messages');
+    }
   }
 );
 
 export const fetchDirectMessages = createAsyncThunk(
   "messages/fetchDirectMessages",
-  async ({ userId, page = 1, limit = 50 }: { userId: string; page?: number; limit?: number }) => {
-    const response = await messagesService.getDirectMessages(userId, page, limit);
-    return { conversationId: userId, messages: response.data || [] };
+  async ({ userId, page = 1, limit = 50 }: { userId: string; page?: number; limit?: number }, { dispatch }) => {
+    const result = await dispatch(messageApiSlice.endpoints.getDirectMessages.initiate({ userId, page, limit }));
+    if ('data' in result) {
+      return { conversationId: userId, messages: result.data.data?.data || [] };
+    } else {
+      throw new Error('Failed to fetch direct messages');
+    }
   }
 );
 
 export const sendMessage = createAsyncThunk(
   "messages/sendMessage",
-  async (payload: SendMessagePayload, { rejectWithValue }) => {
+  async (payload: SendMessagePayload, { dispatch, rejectWithValue }) => {
     try {
-      const response = await messagesService.sendMessage(payload);
-      return response.data!;
+      const result = await dispatch(messageApiSlice.endpoints.sendMessage.initiate(payload));
+      if ('data' in result) {
+        return result.data.data;
+      } else {
+        return rejectWithValue('Failed to send message');
+      }
     } catch (error: unknown) {
       return rejectWithValue((error as { message: string }).message || "Failed to send message");
     }
@@ -54,15 +66,23 @@ export const sendMessage = createAsyncThunk(
 
 export const editMessage = createAsyncThunk(
   "messages/editMessage",
-  async ({ id, content }: { id: string; content: string }) => {
-    const response = await messagesService.editMessage(id, content);
-    return response.data!;
+  async ({ id, content }: { id: string; content: string }, { dispatch }) => {
+    const result = await dispatch(messageApiSlice.endpoints.editMessage.initiate({ id, content }));
+    if ('data' in result) {
+      return result.data.data;
+    } else {
+      throw new Error('Failed to edit message');
+    }
   }
 );
 
-export const deleteMessage = createAsyncThunk("messages/deleteMessage", async (id: string) => {
-  await messagesService.deleteMessage(id);
-  return id;
+export const deleteMessage = createAsyncThunk("messages/deleteMessage", async (id: string, { dispatch }) => {
+  const result = await dispatch(messageApiSlice.endpoints.deleteMessage.initiate(id));
+  if ('data' in result) {
+    return id;
+  } else {
+    throw new Error('Failed to delete message');
+  }
 });
 
 // Slice

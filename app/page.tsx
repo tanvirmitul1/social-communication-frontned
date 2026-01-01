@@ -2,20 +2,21 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/lib/api";
+import { useAppSelector } from "@/lib/store";
 import { MessageCircle, Loader2 } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     // Check if user is authenticated
-    if (authService.isAuthenticated()) {
+    if (isAuthenticated) {
       router.replace("/messages");
     } else {
       router.replace("/login");
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   // Show loading state while redirecting
   return (

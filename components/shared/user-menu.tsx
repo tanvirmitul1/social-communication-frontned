@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
 import { logout as logoutAction } from "@/lib/store/slices/auth.slice";
-import { authService } from "@/lib/api";
 import { socketManager } from "@/lib/socket/socket-manager";
 import {
   DropdownMenu,
@@ -24,13 +23,10 @@ export function UserMenu() {
 
   const handleLogout = async () => {
     try {
-      // Call logout API
-      await authService.logout();
-
       // Disconnect WebSocket
       socketManager.disconnect();
 
-      // Clear Redux state
+      // Clear Redux state and call logout API
       dispatch(logoutAction());
 
       // Redirect to login
