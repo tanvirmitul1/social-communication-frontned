@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/store";
-import { getCurrentUser } from "@/lib/store/slices/auth.slice";
+import { useGetCurrentUserQuery } from "@/lib/api";
+import { setUser } from "@/lib/store/slices/auth.slice";
 import { fetchUserGroups } from "@/lib/store/slices/conversations.slice";
 import {
   fetchDirectMessages,
@@ -42,11 +43,15 @@ export default function MessagesPage() {
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [addMembersOpen, setAddMembersOpen] = useState(false);
 
+  const { data: currentUser, isLoading, error } = useGetCurrentUserQuery(undefined, {
+    skip: !!user, // Skip if user is already in state
+  });
+
   useEffect(() => {
-    if (!user) {
-      dispatch(getCurrentUser());
+    if (currentUser && !user) {
+      dispatch(setUser(currentUser));
     }
-  }, [dispatch, user]);
+  }, [currentUser, user, dispatch]);
 
   useEffect(() => {
     // Fetch user's groups on mount

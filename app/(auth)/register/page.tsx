@@ -7,7 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MessageCircle, Loader2, Check } from "lucide-react";
 import { useAppDispatch } from "@/lib/store";
-import { register as registerAction } from "@/lib/store/slices/auth.slice";
+import { setUser } from "@/lib/store/slices/auth.slice";
+import { useRegisterMutation } from "@/lib/api";
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [registerMutation] = useRegisterMutation();
 
   const {
     register,
@@ -33,20 +35,35 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      await dispatch(registerAction({
+      const result = await registerMutation({
         username: data.username,
         email: data.email,
         password: data.password,
-      })).unwrap();
+      }).unwrap();
 
+      // Update Redux state with the user info (redux-persist will handle storage)
+      if (result?.user) {
+        dispatch(setUser(result.user));
+      }
+      
       setSuccess(true);
 
       // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    } catch (err) {
-      setError(err as string);
+    } catch (err: unknown) {
+      if (typeof err === "string") {
+        setError(err);
+      } else if (err && typeof err === "object" && "data" in err) {
+        // Extract error message from RTK Query error
+        const errorData = (err as { data?: { message?: string; error?: string } }).data;
+        setError(errorData?.message || errorData?.error || "Registration failed");
+      } else if (err && typeof err === "object" && "message" in err) {
+        setError((err as Error).message);
+      } else {
+        setError("An error occurred during registration. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

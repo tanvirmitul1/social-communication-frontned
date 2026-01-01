@@ -7,7 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MessageCircle, Loader2 } from "lucide-react";
 import { useAppDispatch } from "@/lib/store";
-import { login } from "@/lib/store/slices/auth.slice";
+import { setUser } from "@/lib/store/slices/auth.slice";
+import { useLoginMutation } from "@/lib/api";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginMutation] = useLoginMutation();
 
   const {
     register,
@@ -32,16 +34,24 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const result = await dispatch(login(data)).unwrap();
+      const result = await loginMutation(data).unwrap();
       if (result) {
+        // Update Redux state (redux-persist will handle storage)
+        dispatch(setUser(result.user));
+        
         router.push("/messages");
       }
-    } catch (err) {
+    } catch (err: unknown) {
       // Handle error based on type
       if (typeof err === "string") {
         setError(err);
+      } else if (err && typeof err === "object" && "data" in err) {
+        // Extract error message from RTK Query error
+        const errorData = (err as { data?: { message?: string; error?: string } }).data;
+        const errorMessage = errorData?.message || errorData?.error || "Login failed";
+        setError(errorMessage);
       } else if (err && typeof err === "object" && "message" in err) {
-        setError(err.message as string);
+        setError((err as Error).message);
       } else {
         setError("An error occurred during login. Please try again.");
       }

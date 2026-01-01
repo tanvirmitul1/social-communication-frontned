@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
-import { logout as logoutAction } from "@/lib/store/slices/auth.slice";
+import { useLogoutMutation } from "@/lib/api";
+import { clearAuth } from "@/lib/store/slices/auth.slice";
 import { socketManager } from "@/lib/socket/socket-manager";
 import {
   DropdownMenu,
@@ -20,14 +21,18 @@ export function UserMenu() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user } = useAppSelector((state) => state.auth);
+  const [logoutMutation] = useLogoutMutation();
 
   const handleLogout = async () => {
     try {
       // Disconnect WebSocket
       socketManager.disconnect();
 
-      // Clear Redux state and call logout API
-      dispatch(logoutAction());
+      // Call logout API
+      await logoutMutation(undefined).unwrap();
+
+      // Clear Redux state (redux-persist will handle storage cleanup)
+      dispatch(clearAuth());
 
       // Redirect to login
       router.replace("/login");
@@ -35,7 +40,7 @@ export function UserMenu() {
       console.error("Logout failed:", error);
       // Even if API fails, still log out locally
       socketManager.disconnect();
-      dispatch(logoutAction());
+      dispatch(clearAuth());
       router.replace("/login");
     }
   };

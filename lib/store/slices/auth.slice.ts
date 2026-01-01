@@ -42,8 +42,13 @@ export const login = createAsyncThunk(
         return response;
       } else {
         // Handle error case
-        const errorPayload = JSON.parse(result.error as string);
-        return rejectWithValue(errorPayload.message || "Login failed");
+        const errorPayload = result.error;
+        // RTK Query error is already an object, not a string
+        if (errorPayload && typeof errorPayload === 'object' && 'data' in errorPayload) {
+          const errorData = errorPayload.data as { message?: string; success?: boolean };
+          return rejectWithValue(errorData.message || "Login failed");
+        }
+        return rejectWithValue("Login failed");
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
@@ -73,8 +78,13 @@ export const register = createAsyncThunk(
         return response;
       } else {
         // Handle error case
-        const errorPayload = JSON.parse(result.error as string);
-        return rejectWithValue(errorPayload.message || "Registration failed");
+        const errorPayload = result.error;
+        // RTK Query error is already an object, not a string
+        if (errorPayload && typeof errorPayload === 'object' && 'data' in errorPayload) {
+          const errorData = errorPayload.data as { message?: string; success?: boolean };
+          return rejectWithValue(errorData.message || "Registration failed");
+        }
+        return rejectWithValue("Registration failed");
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
@@ -122,8 +132,13 @@ export const getCurrentUser = createAsyncThunk(
         return response;
       } else {
         // Handle error case
-        const errorPayload = JSON.parse(result.error as string);
-        return rejectWithValue(errorPayload.message || "Failed to get user");
+        const errorPayload = result.error;
+        // RTK Query error is already an object, not a string
+        if (errorPayload && typeof errorPayload === 'object' && 'data' in errorPayload) {
+          const errorData = errorPayload.data as { message?: string; success?: boolean };
+          return rejectWithValue(errorData.message || "Failed to get user");
+        }
+        return rejectWithValue("Failed to get user");
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
