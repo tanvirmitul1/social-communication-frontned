@@ -33,11 +33,6 @@ const authSlice = createSlice({
       state.accessToken = accessToken;
       state.refreshToken = refreshToken;
       state.error = null;
-      
-      // Store in storage for persistence
-      storage.set(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-      storage.set(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-      storage.set(STORAGE_KEYS.USER, user);
     },
     clearAuth: (state) => {
       state.user = null;
@@ -45,17 +40,10 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.error = null;
-      
-      // Clear from storage
-      storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
-      storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
-      storage.remove(STORAGE_KEYS.USER);
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
-        // Update in storage as well
-        storage.set(STORAGE_KEYS.USER, state.user);
       }
     },
     setError: (state, action: PayloadAction<string | null>) => {
