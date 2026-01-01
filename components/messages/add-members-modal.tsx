@@ -71,12 +71,7 @@ export function AddMembersModal({
     }
   };
 
-  const handleClose = () => {
-    setSearchQuery("");
-    setAddedMembers([]);
-    setError(null);
-    onOpenChange(false);
-  };
+
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -85,7 +80,7 @@ export function AddMembersModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Members</DialogTitle>
@@ -183,7 +178,12 @@ export function AddMembersModal({
         </div>
 
         <DialogFooter>
-          <Button onClick={handleClose}>Done</Button>
+          <Button onClick={() => {
+            setSearchQuery("");
+            setAddedMembers([]);
+            setError(null);
+            onOpenChange(false);
+          }}>Done</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
