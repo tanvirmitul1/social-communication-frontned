@@ -37,12 +37,28 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
     data: searchResultsData,
     isFetching: isSearching,
     error,
+    refetch,
   } = useSearchUsersQuery(
     { query: searchQuery, page: 1, limit: 20 },
     { skip: !searchQuery.trim() }
   );
 
-  const searchResults = searchResultsData?.data?.data || [];
+  // Handle the API response structure properly
+  // The API returns { success: boolean, data: User[], meta: Meta }
+  // So searchResultsData contains the full response { success: true, data: [...], meta: {...} }
+  // and searchResultsData.data is the actual array of users
+  const searchResults = searchResultsData?.data || [];
+
+  // Debug logging to understand the issue
+  if (searchQuery && searchResultsData) {
+    console.log('Search query:', searchQuery);
+    console.log('Full API response object:', searchResultsData);
+    console.log('Type of searchResultsData:', typeof searchResultsData);
+    console.log('searchResultsData keys:', Object.keys(searchResultsData || {}));
+    console.log('Raw searchResultsData:', searchResultsData);
+    console.log('Extracted search results:', searchResults);
+    console.log('Results length:', searchResults.length);
+  }
 
   // Determine error state based on props
   const derivedSearchError =
