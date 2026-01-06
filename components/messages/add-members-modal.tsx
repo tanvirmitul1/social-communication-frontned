@@ -71,8 +71,6 @@ export function AddMembersModal({
     }
   };
 
-
-
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault(); // Prevent form submission
@@ -178,12 +176,16 @@ export function AddMembersModal({
         </div>
 
         <DialogFooter>
-          <Button onClick={() => {
-            setSearchQuery("");
-            setAddedMembers([]);
-            setError(null);
-            onOpenChange(false);
-          }}>Done</Button>
+          <Button
+            onClick={() => {
+              setSearchQuery("");
+              setAddedMembers([]);
+              setError(null);
+              onOpenChange(false);
+            }}
+          >
+            Done
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

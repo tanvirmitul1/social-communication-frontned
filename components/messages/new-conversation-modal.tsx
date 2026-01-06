@@ -44,12 +44,13 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
 
   const searchResults = searchResultsData?.data?.data || [];
 
-  // Handle error from RTK Query
-  if (error && searchQuery.trim()) {
-    setSearchError("Failed to search users. Please try again.");
-  } else if (searchResultsData && !error) {
-    setSearchError(null);
-  }
+  // Determine error state based on props
+  const derivedSearchError =
+    error && searchQuery.trim()
+      ? "Failed to search users. Please try again."
+      : searchResultsData && !error
+        ? null
+        : searchError;
 
   const handleStartConversation = (user: User) => {
     // Create a new conversation
@@ -112,9 +113,9 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
           </div>
 
           {/* Error Message */}
-          {searchError && (
+          {derivedSearchError && (
             <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              {searchError}
+              {derivedSearchError}
             </div>
           )}
 

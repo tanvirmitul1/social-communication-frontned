@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/store";
 import { useGetCurrentUserQuery } from "@/lib/api";
 import { setUser } from "@/lib/store/slices/auth.slice";
@@ -142,22 +142,30 @@ export default function MessagesPage() {
     }
   };
 
-  const filteredConversations = conversations.filter((conv) => {
-    if (activeTab === "groups" && conv.type !== "group") return false;
-    if (activeTab === "messages" && conv.type !== "direct") return false;
-    if (activeTab === "calls") return false; // TODO: Filter for calls
+  const filteredConversations = useMemo(
+    () =>
+      conversations.filter((conv) => {
+        if (activeTab === "groups" && conv.type !== "group") return false;
+        if (activeTab === "messages" && conv.type !== "direct") return false;
+        if (activeTab === "calls") return false; // TODO: Filter for calls
 
-    if (searchQuery) {
-      return conv.title.toLowerCase().includes(searchQuery.toLowerCase());
-    }
+        if (searchQuery) {
+          return conv.title.toLowerCase().includes(searchQuery.toLowerCase());
+        }
 
-    return true;
-  });
+        return true;
+      }),
+    [conversations, activeTab, searchQuery]
+  );
 
-  const activeConv = conversations.find((c) => c.id === activeConversation);
-  const currentMessages = activeConversation
-    ? messagesByConversation[activeConversation] || []
-    : [];
+  const activeConv = useMemo(
+    () => conversations.find((c) => c.id === activeConversation),
+    [conversations, activeConversation]
+  );
+  const currentMessages = useMemo(
+    () => (activeConversation ? messagesByConversation[activeConversation] || [] : []),
+    [activeConversation, messagesByConversation]
+  );
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
