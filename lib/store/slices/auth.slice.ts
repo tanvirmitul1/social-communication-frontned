@@ -37,8 +37,8 @@ const authSlice = createSlice({
       // Ensure tokens are also stored in localStorage for immediate availability
       if (typeof window !== 'undefined' && window.localStorage) {
         try {
-          window.localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, JSON.stringify(accessToken));
-          window.localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, JSON.stringify(refreshToken));
+          window.localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+          window.localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
           window.localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
         } catch (error) {
           console.error('Error storing auth data in localStorage:', error);
