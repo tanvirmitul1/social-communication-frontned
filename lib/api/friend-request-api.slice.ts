@@ -20,6 +20,14 @@ export const friendRequestApiSlice = baseApiSlice.injectEndpoints({
         url: API_ROUTES.FRIEND_REQUESTS.ACCEPT(id),
         method: 'POST',
       }),
+      transformErrorResponse: (response) => {
+        const errorData = response.data as { success?: boolean; message?: string; error?: string };
+        return {
+          message: errorData?.message || 'An error occurred',
+          error: errorData?.error,
+          status: response.status,
+        };
+      },
       invalidatesTags: ['User'],
     }),
 
@@ -29,6 +37,14 @@ export const friendRequestApiSlice = baseApiSlice.injectEndpoints({
         url: API_ROUTES.FRIEND_REQUESTS.REJECT(id),
         method: 'POST',
       }),
+      transformErrorResponse: (response) => {
+        const errorData = response.data as { success?: boolean; message?: string; error?: string };
+        return {
+          message: errorData?.message || 'An error occurred',
+          error: errorData?.error,
+          status: response.status,
+        };
+      },
       invalidatesTags: ['User'],
     }),
 
