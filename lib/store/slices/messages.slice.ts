@@ -29,7 +29,7 @@ export const fetchGroupMessages = createAsyncThunk(
   async ({ groupId, page = 1, limit = 50 }: { groupId: string; page?: number; limit?: number }, { dispatch }) => {
     const result = await dispatch(messageApiSlice.endpoints.getGroupMessages.initiate({ groupId, page, limit }));
     if ('data' in result) {
-      return { conversationId: groupId, messages: result.data.data?.data || [] };
+      return { conversationId: groupId, messages: result.data.data || [] };
     } else {
       throw new Error('Failed to fetch group messages');
     }
@@ -41,7 +41,7 @@ export const fetchDirectMessages = createAsyncThunk(
   async ({ userId, page = 1, limit = 50 }: { userId: string; page?: number; limit?: number }, { dispatch }) => {
     const result = await dispatch(messageApiSlice.endpoints.getDirectMessages.initiate({ userId, page, limit }));
     if ('data' in result) {
-      return { conversationId: userId, messages: result.data.data?.data || [] };
+      return { conversationId: userId, messages: result.data.data || [] };
     } else {
       throw new Error('Failed to fetch direct messages');
     }
@@ -158,7 +158,7 @@ const messagesSlice = createSlice({
       .addCase(fetchGroupMessages.fulfilled, (state, action) => {
         state.isLoading = false;
         const { conversationId, messages } = action.payload;
-        state.messagesByConversation[conversationId] = messages.reverse(); // Newest first
+        state.messagesByConversation[conversationId] = messages; // Keep original order (oldest first)
       })
       .addCase(fetchGroupMessages.rejected, (state, action) => {
         state.isLoading = false;
@@ -174,7 +174,7 @@ const messagesSlice = createSlice({
       .addCase(fetchDirectMessages.fulfilled, (state, action) => {
         state.isLoading = false;
         const { conversationId, messages } = action.payload;
-        state.messagesByConversation[conversationId] = messages.reverse();
+        state.messagesByConversation[conversationId] = messages;
       })
       .addCase(fetchDirectMessages.rejected, (state, action) => {
         state.isLoading = false;
