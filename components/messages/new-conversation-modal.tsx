@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store";
 import { addConversation } from "@/lib/store/slices/conversations.slice";
@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, UserPlus, MessageCircle } from "lucide-react";
 import { getInitials } from "@/lib/utils/format";
 import type { User } from "@/types";
 
@@ -32,15 +32,15 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
   const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  // RTK Query hook
+  // RTK Query hook - Will call API automatically when modal opens with default query
   const {
     data: searchResultsData,
     isFetching: isSearching,
     error,
     refetch,
   } = useSearchUsersQuery(
-    { query: searchQuery, page: 1, limit: 20 },
-    { skip: !searchQuery.trim() }
+    { query: searchQuery || (open ? "u" : ""), page: 1, limit: 20 },
+    { skip: !open } // Only call API when modal is open
   );
 
   // Handle the API response structure properly
@@ -140,11 +140,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
             {searchResults.length > 0 ? (
               <div className="space-y-2">
                 {searchResults.map((user: User) => (
-                  <button
-                    key={user.id}
-                    onClick={() => handleStartConversation(user)}
-                    className="flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors hover:bg-accent"
-                  >
+                  <div key={user.id} className="flex w-full items-center gap-3 rounded-lg p-3 border">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={user.avatar || undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground">
@@ -162,8 +158,34 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
                         </p>
                       )}
                     </div>
-                    {user.isOnline && <div className="h-3 w-3 rounded-full bg-green-500" />}
-                  </button>
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStartConversation(user)}
+                        className="flex items-center gap-1 px-2 py-1 h-8"
+                      >
+                        <MessageCircle className="h-3 w-3" />
+                        Message
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          // TODO: Implement friend request functionality
+                          console.log('Sending friend request to', user.username);
+                          // In a real implementation, you would call an API to send friend request
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 h-8"
+                      >
+                        <UserPlus className="h-3 w-3" />
+                        Add Friend
+                      </Button>
+                    </div>
+                    <div className="ml-2">
+                      {user.isOnline && <div className="h-3 w-3 rounded-full bg-green-500" />}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : searchQuery && !isSearching ? (
