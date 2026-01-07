@@ -33,6 +33,17 @@ const authSlice = createSlice({
       state.accessToken = accessToken;
       state.refreshToken = refreshToken;
       state.error = null;
+      
+      // Ensure tokens are also stored in localStorage for immediate availability
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, JSON.stringify(accessToken));
+          window.localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, JSON.stringify(refreshToken));
+          window.localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        } catch (error) {
+          console.error('Error storing auth data in localStorage:', error);
+        }
+      }
     },
     clearAuth: (state) => {
       state.user = null;
@@ -40,6 +51,17 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.error = null;
+      
+      // Also remove from localStorage
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+          window.localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+          window.localStorage.removeItem(STORAGE_KEYS.USER);
+        } catch (error) {
+          console.error('Error removing auth data from localStorage:', error);
+        }
+      }
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {

@@ -7,7 +7,16 @@ import { STORAGE_KEYS } from '@/lib/constants';
 export const baseQuery = fetchBaseQuery({
   baseUrl: env.api.baseUrl,
   prepareHeaders: (headers, { getState }) => {
-    const token = storage.get<string>(STORAGE_KEYS.ACCESS_TOKEN);
+    let token = storage.get<string>(STORAGE_KEYS.ACCESS_TOKEN);
+    
+    // Clean up the token if it has extra quotes
+    if (token && typeof token === 'string') {
+      // Remove surrounding quotes if present
+      if (token.startsWith('"') && token.endsWith('"') && token.length > 1) {
+        token = token.substring(1, token.length - 1);
+      }
+    }
+    
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }

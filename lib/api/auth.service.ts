@@ -23,6 +23,7 @@ export const authService = {
 
       if (response.data) {
         // Store tokens and user info
+        // The storage.set function handles the string vs object storage correctly
         storage.set(STORAGE_KEYS.ACCESS_TOKEN, response.data.accessToken);
         storage.set(STORAGE_KEYS.REFRESH_TOKEN, response.data.refreshToken);
         storage.set(STORAGE_KEYS.USER, response.data.user);

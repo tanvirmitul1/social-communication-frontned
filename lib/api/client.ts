@@ -29,7 +29,15 @@ class APIClient {
     // Request interceptor - Add auth token
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const token = storage.get<string>(STORAGE_KEYS.ACCESS_TOKEN);
+        let token = storage.get<string>(STORAGE_KEYS.ACCESS_TOKEN);
+        
+        // Clean up the token if it has extra quotes
+        if (token && typeof token === 'string') {
+          // Remove surrounding quotes if present
+          if (token.startsWith('"') && token.endsWith('"') && token.length > 1) {
+            token = token.substring(1, token.length - 1);
+          }
+        }
 
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;

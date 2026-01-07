@@ -12,7 +12,27 @@ export const storage = {
 
       // Try to parse JSON, if it fails return as string
       try {
-        return JSON.parse(item) as T;
+        const parsedValue = JSON.parse(item) as T;
+        
+        // Special handling for string values that might be double-encoded
+        if (typeof parsedValue === 'string') {
+          // Check if the parsed string looks like a JWT token
+          // JWT tokens have a specific format: header.payload.signature
+          if (/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(parsedValue)) {
+            return parsedValue as T;
+          }
+          
+          // If it's a string that looks like it might be JSON, try parsing it again
+          // This handles cases where a string was double-encoded
+          try {
+            const doubleParsed = JSON.parse(parsedValue);
+            return typeof doubleParsed === 'string' ? doubleParsed as T : parsedValue as T;
+          } catch {
+            return parsedValue as T;
+          }
+        }
+        
+        return parsedValue;
       } catch {
         return item as T;
       }
