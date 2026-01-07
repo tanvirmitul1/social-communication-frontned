@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/store";
 import { addConversation } from "@/lib/store/slices/conversations.slice";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
-import { useSearchUsersQuery } from "@/lib/api";
+import { useSearchUsersQuery, useSendFriendRequestMutation } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [sendFriendRequest, { isLoading: isSendingRequest }] = useSendFriendRequestMutation();
 
   // RTK Query hook - Will call API automatically when modal opens with default query
   const {
@@ -171,15 +172,27 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          // TODO: Implement friend request functionality
-                          console.log('Sending friend request to', user.username);
-                          // In a real implementation, you would call an API to send friend request
+                        onClick={async () => {
+                          try {
+                            await sendFriendRequest({ receiverId: user.id }).unwrap();
+                            // Show a success message or update UI as needed
+                            console.log('Friend request sent successfully to', user.username);
+                          } catch (err) {
+                            console.error('Failed to send friend request:', err);
+                            // Show an error message to the user
+                          }
                         }}
+                        disabled={isSendingRequest}
                         className="flex items-center gap-1 px-2 py-1 h-8"
                       >
-                        <UserPlus className="h-3 w-3" />
-                        Add Friend
+                        {isSendingRequest ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <UserPlus className="h-3 w-3" />
+                            Add Friend
+                          </>
+                        )}
                       </Button>
                     </div>
                     <div className="ml-2">

@@ -10,6 +10,8 @@ import { userApiSlice } from "./user-api";
 import { messageApiSlice } from "./message-api";
 import { groupApiSlice } from "./group-api";
 import { callApiSlice } from "./call-api";
+import { friendRequestApiSlice } from "./friend-request-api.slice";
+import { friendsApiSlice } from "./friends-api.slice";
 
 import { 
   useLoginMutation,
@@ -19,6 +21,19 @@ import {
   useGetCurrentUserQuery,
   useRefreshTokenMutation,
 } from "./auth-api";
+
+import {
+  useSendFriendRequestMutation,
+  useAcceptFriendRequestMutation,
+  useRejectFriendRequestMutation,
+  useCancelFriendRequestMutation,
+  useGetPendingFriendRequestsQuery,
+} from "./friend-request-api.slice";
+
+import {
+  useGetFriendsQuery,
+  useRemoveFriendMutation,
+} from "./friends-api.slice";
 
 import {
   useGetUserQuery,
@@ -80,6 +95,17 @@ export {
   useSearchUsersQuery,
   useGetUserPresenceQuery,
   
+  // Friend Request hooks
+  useSendFriendRequestMutation,
+  useAcceptFriendRequestMutation,
+  useRejectFriendRequestMutation,
+  useCancelFriendRequestMutation,
+  useGetPendingFriendRequestsQuery,
+  
+  // Friends hooks
+  useGetFriendsQuery,
+  useRemoveFriendMutation,
+  
   // Group hooks
   useCreateGroupMutation,
   useGetGroupQuery,
@@ -122,6 +148,8 @@ export { userApiSlice };
 export { messageApiSlice };
 export { groupApiSlice };
 export { callApiSlice };
+export { friendRequestApiSlice };
+export { friendsApiSlice };
 
 // Re-export for convenience
 export const api = apiSlice;

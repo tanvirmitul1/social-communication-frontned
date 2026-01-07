@@ -38,7 +38,10 @@ import { MessageInput } from "@/components/messages/message-input";
 import { NewConversationModal } from "@/components/messages/new-conversation-modal";
 import { CreateGroupModal } from "@/components/messages/create-group-modal";
 import { AddMembersModal } from "@/components/messages/add-members-modal";
+import { FriendRequestsModal } from "@/components/messages/friend-requests-modal";
+import { FriendsListModal } from "@/components/messages/friends-list-modal";
 import { UserMenu } from "@/components/shared/user-menu";
+import { usePendingFriendRequests } from "@/hooks/use-pending-friend-requests";
 import { socketManager } from "@/lib/socket/socket-manager";
 import type { SendMessagePayload } from "@/types";
 
@@ -55,6 +58,9 @@ export default function MessagesPage() {
   const [newConversationOpen, setNewConversationOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [addMembersOpen, setAddMembersOpen] = useState(false);
+  const [friendRequestsOpen, setFriendRequestsOpen] = useState(false);
+  const [friendsListOpen, setFriendsListOpen] = useState(false);
+  const { pendingCount } = usePendingFriendRequests();
 
   const {
     data: currentUser,
@@ -185,9 +191,26 @@ export default function MessagesPage() {
                 </div>
                 <h1 className="text-xl font-bold">Messages</h1>
               </div>
-              <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setFriendsListOpen(true)}>
+                  <div className="relative">
+                    <Users className="h-5 w-5" />
+                  </div>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setFriendRequestsOpen(true)}>
+                  <div className="relative">
+                    <UserPlus className="h-5 w-5" />
+                    {pendingCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </div>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button>
+              </div>
             </div>
 
             {/* User Profile */}
@@ -368,6 +391,8 @@ export default function MessagesPage() {
       {/* Modals */}
       <NewConversationModal open={newConversationOpen} onOpenChange={setNewConversationOpen} />
       <CreateGroupModal open={createGroupOpen} onOpenChange={setCreateGroupOpen} />
+      <FriendRequestsModal open={friendRequestsOpen} onOpenChange={setFriendRequestsOpen} />
+      <FriendsListModal open={friendsListOpen} onOpenChange={setFriendsListOpen} />
       {activeConv && activeConv.type === "group" && (
         <AddMembersModal
           open={addMembersOpen}

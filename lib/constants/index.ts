@@ -18,6 +18,19 @@ export const API_ROUTES = {
     SEARCH: "/users",
     PRESENCE: (id: string) => `/users/${id}/presence`,
   },
+  FRIEND_REQUESTS: {
+    BASE: "/users/friend-requests",
+    SEND: "/users/friend-requests",
+    ACCEPT: (id: string) => `/users/friend-requests/${id}/accept`,
+    REJECT: (id: string) => `/users/friend-requests/${id}/reject`,
+    CANCEL: (id: string) => `/users/friend-requests/${id}/cancel`,
+    PENDING: "/users/friend-requests/pending",
+  },
+  FRIENDS: {
+    BASE: "/friends",
+    LIST: "/friends",
+    REMOVE: (id: string) => `/friends/${id}`,
+  },
   MESSAGES: {
     BASE: "/messages",
     BY_ID: (id: string) => `/messages/${id}`,

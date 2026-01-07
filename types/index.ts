@@ -14,10 +14,6 @@ export interface User {
   updatedAt: string;
 }
 
-export interface UserProfile extends User {
-  // Additional profile fields can be added here
-}
-
 export interface UserPresence {
   userId: string;
   isOnline: boolean;
@@ -240,6 +236,24 @@ export interface UserState {
 
 // Theme Types
 export type Theme = "light" | "dark" | "system";
+
+// Friend Request Types
+export type FriendRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELED";
+
+export interface FriendRequest {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  status: FriendRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  sender?: User;
+  receiver?: User;
+}
+
+export interface SendFriendRequestPayload {
+  receiverId: string;
+}
 
 // Utility Types
 export type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
