@@ -11,7 +11,12 @@ import {
   fetchDirectMessages,
   fetchGroupMessages,
   sendMessage as sendMessageAction,
+  addMessage,
+  updateMessage,
+  removeMessage,
+  setTyping,
 } from "@/lib/store/slices/messages.slice";
+import type { SendMessagePayload } from "@/types";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
 import { resetUnreadCount } from "@/lib/store/slices/conversations.slice";
 import {
@@ -168,6 +173,8 @@ export default function MessagesPage() {
     () => conversations.find((c) => c.id === activeConversation),
     [conversations, activeConversation]
   );
+
+  
   const currentMessages = useMemo(
     () => (activeConversation ? messagesByConversation[activeConversation] || [] : []),
     [activeConversation, messagesByConversation]
