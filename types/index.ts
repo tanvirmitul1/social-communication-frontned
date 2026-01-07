@@ -255,6 +255,16 @@ export interface SendFriendRequestPayload {
   receiverId: string;
 }
 
+// Chat List Types
+export interface ChatListResponse {
+  type: "direct" | "group";
+  user?: User;
+  group?: Group;
+  lastMessage?: Message;
+  unreadCount: number;
+  lastMessageAt: string;
+}
+
 // Utility Types
 export type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type WithRequired<T, K extends keyof T> = T & Required<Pick<T, K>>;

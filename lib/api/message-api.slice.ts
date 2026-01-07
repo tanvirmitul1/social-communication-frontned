@@ -18,13 +18,13 @@ export const messageApiSlice = baseApiSlice.injectEndpoints({
     }),
     
     getGroupMessages: builder.query({
-      query: ({ groupId, page = 1, limit = 50 }) => 
+      query: ({ groupId, page = 1, limit = 20 }) => 
         `/messages/group/${groupId}?page=${page}&limit=${limit}`,
       providesTags: ['Message'],
     }),
     
     getDirectMessages: builder.query({
-      query: ({ userId, page = 1, limit = 50 }) => 
+      query: ({ userId, page = 1, limit = 20 }) => 
         `/messages/direct/${userId}?page=${page}&limit=${limit}`,
       providesTags: ['Message'],
     }),
@@ -85,6 +85,12 @@ export const messageApiSlice = baseApiSlice.injectEndpoints({
         `/messages/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`,
       providesTags: ['Message'],
     }),
+    
+    getChatList: builder.query({
+      query: ({ page = 1, limit = 20 }) => 
+        `/messages/chats?page=${page}&limit=${limit}`,
+      providesTags: ['Conversation'],
+    }),
   }),
 });
 
@@ -100,4 +106,5 @@ export const {
   useAddReactionMutation,
   useRemoveReactionMutation,
   useSearchMessagesQuery,
+  useGetChatListQuery,
 } = messageApiSlice;

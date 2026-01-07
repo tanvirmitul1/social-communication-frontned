@@ -55,6 +55,7 @@ import {
   useAddReactionMutation,
   useRemoveReactionMutation,
   useSearchMessagesQuery,
+  useGetChatListQuery,
 } from "./message-api";
 
 import {
@@ -128,6 +129,7 @@ export {
   useAddReactionMutation,
   useRemoveReactionMutation,
   useSearchMessagesQuery,
+  useGetChatListQuery,
   
   // Call hooks
   useInitiateCallMutation,

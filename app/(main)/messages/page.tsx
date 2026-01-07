@@ -6,7 +6,7 @@ import { useGetCurrentUserQuery } from "@/lib/api";
 import { setUser } from "@/lib/store/slices/auth.slice";
 import { storage } from "@/lib/utils/storage";
 import { STORAGE_KEYS } from "@/lib/constants";
-import { fetchUserGroups } from "@/lib/store/slices/conversations.slice";
+import { fetchChatList, fetchUserGroups } from "@/lib/store/slices/conversations.slice";
 import {
   fetchDirectMessages,
   fetchGroupMessages,
@@ -48,7 +48,6 @@ import { FriendsListModal } from "@/components/messages/friends-list-modal";
 import { UserMenu } from "@/components/shared/user-menu";
 import { usePendingFriendRequests } from "@/hooks/use-pending-friend-requests";
 import { socketManager } from "@/lib/socket/socket-manager";
-import type { SendMessagePayload } from "@/types";
 
 export default function MessagesPage() {
   const dispatch = useAppDispatch();
@@ -89,8 +88,8 @@ export default function MessagesPage() {
   }, [currentUser, user, dispatch]);
 
   useEffect(() => {
-    // Fetch user's groups on mount
-    dispatch(fetchUserGroups());
+    // Fetch user's chat list on mount
+    dispatch(fetchChatList({}));
   }, [dispatch]);
 
   const toggleTheme = () => {

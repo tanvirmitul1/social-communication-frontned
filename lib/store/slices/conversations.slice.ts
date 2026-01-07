@@ -3,8 +3,8 @@
  */
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { groupApiSlice, userApiSlice } from "@/lib/api";
-import type { Conversation, Message, Group, User } from "@/types";
+import { groupApiSlice, userApiSlice, messageApiSlice } from "@/lib/api";
+import type { Conversation, Message, Group, User, ChatListResponse } from "@/types";
 
 interface ConversationsState {
   conversations: Conversation[];
@@ -50,7 +50,64 @@ function createConversationFromUser(user: User): Conversation {
   };
 }
 
+// Helper to create conversation from chat list response
+function createConversationFromChat(chat: ChatListResponse): Conversation {
+  if (chat.type === "direct" && chat.user) {
+    return {
+      id: chat.user.id,
+      type: "direct",
+      title: chat.user.username,
+      avatar: chat.user.avatar || null,
+      participants: [chat.user.id],
+      lastMessage: chat.lastMessage ? {
+        id: chat.lastMessage.id,
+        content: chat.lastMessage.content,
+        createdAt: chat.lastMessage.createdAt,
+        isSent: chat.lastMessage.senderId !== chat.user.id, // Assuming current user is not the sender
+        status: chat.lastMessage.status,
+      } : null,
+      unreadCount: chat.unreadCount,
+      isOnline: false, // Will be updated separately
+      isTyping: false,
+      updatedAt: chat.lastMessageAt,
+    };
+  } else if (chat.type === "group" && chat.group) {
+    return {
+      id: chat.group.id,
+      type: "group",
+      title: chat.group.title,
+      avatar: chat.group.cover || null,
+      participants: chat.group.members?.map((m) => m.user?.id).filter((id): id is string => !!id) || [],
+      lastMessage: chat.lastMessage ? {
+        id: chat.lastMessage.id,
+        content: chat.lastMessage.content,
+        createdAt: chat.lastMessage.createdAt,
+        isSent: true, // For groups, we consider it as sent
+        status: chat.lastMessage.status,
+      } : null,
+      unreadCount: chat.unreadCount,
+      isOnline: false,
+      isTyping: false,
+      updatedAt: chat.lastMessageAt,
+    };
+  }
+  
+  throw new Error("Invalid chat data");
+}
+
 // Async thunks
+export const fetchChatList = createAsyncThunk(
+  "conversations/fetchChatList",
+  async ({ page = 1, limit = 20 }: { page?: number; limit?: number } = {}, { dispatch }) => {
+    const result = await dispatch(messageApiSlice.endpoints.getChatList.initiate({ page, limit }));
+    if ('data' in result) {
+      return result.data.data || [];
+    } else {
+      throw new Error('Failed to fetch chat list');
+    }
+  }
+);
+
 export const fetchUserGroups = createAsyncThunk("conversations/fetchUserGroups", async (_, { dispatch }) => {
   const result = await dispatch(groupApiSlice.endpoints.getUserGroups.initiate({ page: 1, limit: 20 }));
   if ('data' in result) {
@@ -162,8 +219,12 @@ const conversationsSlice = createSlice({
 
         // Merge with existing conversations, avoiding duplicates
         groupConversations.forEach((conversation: Conversation) => {
-          const exists = state.conversations.some((c) => c.id === conversation.id);
-          if (!exists) {
+          const existingIndex = state.conversations.findIndex((c) => c.id === conversation.id);
+          if (existingIndex !== -1) {
+            // Update existing conversation
+            state.conversations[existingIndex] = conversation;
+          } else {
+            // Add new conversation
             state.conversations.push(conversation);
           }
         });
@@ -176,6 +237,38 @@ const conversationsSlice = createSlice({
       .addCase(fetchUserGroups.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || "Failed to fetch groups";
+      });
+
+    // Fetch chat list
+    builder
+      .addCase(fetchChatList.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchChatList.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const chatConversations = action.payload.map(createConversationFromChat);
+
+        // Merge with existing conversations, avoiding duplicates
+        chatConversations.forEach((conversation: Conversation) => {
+          const existingIndex = state.conversations.findIndex((c) => c.id === conversation.id);
+          if (existingIndex !== -1) {
+            // Update existing conversation
+            state.conversations[existingIndex] = conversation;
+          } else {
+            // Add new conversation
+            state.conversations.push(conversation);
+          }
+        });
+
+        // Sort by updatedAt (most recent first)
+        state.conversations.sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+      })
+      .addCase(fetchChatList.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || "Failed to fetch chat list";
       });
 
     // Search users
