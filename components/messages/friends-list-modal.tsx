@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { useAppDispatch } from "@/lib/store";
-import { 
-  useGetFriendsQuery,
-  useRemoveFriendMutation
-} from "@/lib/api";
+import { useGetFriendsQuery, useRemoveFriendMutation } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +25,12 @@ interface FriendsListModalProps {
 export function FriendsListModal({ open, onOpenChange }: FriendsListModalProps) {
   const dispatch = useAppDispatch();
   const [removeFriend, { isLoading: isRemoving }] = useRemoveFriendMutation();
-  const { data: friendsData, isLoading, error, refetch } = useGetFriendsQuery(undefined, {
+  const {
+    data: friendsData,
+    isLoading,
+    error,
+    refetch,
+  } = useGetFriendsQuery(undefined, {
     skip: !open, // Only fetch when modal is open
   });
 
@@ -48,9 +50,7 @@ export function FriendsListModal({ open, onOpenChange }: FriendsListModalProps) 
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Your Friends</DialogTitle>
-          <DialogDescription>
-            Manage your friends list
-          </DialogDescription>
+          <DialogDescription>Manage your friends list</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -66,24 +66,19 @@ export function FriendsListModal({ open, onOpenChange }: FriendsListModalProps) 
             ) : friends.length > 0 ? (
               <div className="space-y-4">
                 {friends.map((friend: User) => (
-                  <div 
-                    key={friend.id} 
-                    className="flex items-center gap-4 rounded-lg border p-4"
-                  >
+                  <div key={friend.id} className="flex items-center gap-4 rounded-lg border p-4">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={friend.avatar || undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {getInitials(friend.username)}
                       </AvatarFallback>
                     </Avatar>
-                    
+
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold truncate">{friend.username}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {friend.email}
-                      </p>
+                      <p className="text-sm text-muted-foreground truncate">{friend.email}</p>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       {friend.isOnline ? (
                         <div className="flex items-center gap-1 text-xs text-green-600">
@@ -91,9 +86,7 @@ export function FriendsListModal({ open, onOpenChange }: FriendsListModalProps) 
                           Online
                         </div>
                       ) : (
-                        <div className="text-xs text-muted-foreground">
-                          Offline
-                        </div>
+                        <div className="text-xs text-muted-foreground">Offline</div>
                       )}
                       <Button
                         size="sm"

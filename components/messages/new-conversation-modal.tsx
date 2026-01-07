@@ -52,13 +52,13 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
 
   // Debug logging to understand the issue
   if (searchQuery && searchResultsData) {
-    console.log('Search query:', searchQuery);
-    console.log('Full API response object:', searchResultsData);
-    console.log('Type of searchResultsData:', typeof searchResultsData);
-    console.log('searchResultsData keys:', Object.keys(searchResultsData || {}));
-    console.log('Raw searchResultsData:', searchResultsData);
-    console.log('Extracted search results:', searchResults);
-    console.log('Results length:', searchResults.length);
+    console.log("Search query:", searchQuery);
+    console.log("Full API response object:", searchResultsData);
+    console.log("Type of searchResultsData:", typeof searchResultsData);
+    console.log("searchResultsData keys:", Object.keys(searchResultsData || {}));
+    console.log("Raw searchResultsData:", searchResultsData);
+    console.log("Extracted search results:", searchResults);
+    console.log("Results length:", searchResults.length);
   }
 
   // Determine error state based on props
@@ -141,7 +141,10 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
             {searchResults.length > 0 ? (
               <div className="space-y-2">
                 {searchResults.map((user: User) => (
-                  <div key={user.id} className="flex w-full items-center gap-3 rounded-lg p-3 border">
+                  <div
+                    key={user.id}
+                    className="flex w-full items-center gap-3 rounded-lg p-3 border"
+                  >
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={user.avatar || undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground">
@@ -176,9 +179,9 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
                           try {
                             await sendFriendRequest({ receiverId: user.id }).unwrap();
                             // Show a success message or update UI as needed
-                            console.log('Friend request sent successfully to', user.username);
+                            console.log("Friend request sent successfully to", user.username);
                           } catch (err) {
-                            console.error('Failed to send friend request:', err);
+                            console.error("Failed to send friend request:", err);
                             // Show an error message to the user
                           }
                         }}

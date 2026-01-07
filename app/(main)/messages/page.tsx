@@ -174,7 +174,6 @@ export default function MessagesPage() {
     [conversations, activeConversation]
   );
 
-  
   const currentMessages = useMemo(
     () => (activeConversation ? messagesByConversation[activeConversation] || [] : []),
     [activeConversation, messagesByConversation]

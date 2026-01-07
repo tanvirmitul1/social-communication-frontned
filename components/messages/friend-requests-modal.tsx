@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useAppDispatch } from "@/lib/store";
-import { 
+import {
   useGetPendingFriendRequestsQuery,
   useAcceptFriendRequestMutation,
   useRejectFriendRequestMutation,
-  useSendFriendRequestMutation
+  useSendFriendRequestMutation,
 } from "@/lib/api";
 import {
   Dialog,
@@ -31,7 +31,12 @@ export function FriendRequestsModal({ open, onOpenChange }: FriendRequestsModalP
   const dispatch = useAppDispatch();
   const [acceptRequest, { isLoading: isAccepting }] = useAcceptFriendRequestMutation();
   const [rejectRequest, { isLoading: isRejecting }] = useRejectFriendRequestMutation();
-  const { data: pendingRequestsData, isLoading, error, refetch } = useGetPendingFriendRequestsQuery(undefined, {
+  const {
+    data: pendingRequestsData,
+    isLoading,
+    error,
+    refetch,
+  } = useGetPendingFriendRequestsQuery(undefined, {
     skip: !open, // Only fetch when modal is open
   });
 
@@ -61,9 +66,7 @@ export function FriendRequestsModal({ open, onOpenChange }: FriendRequestsModalP
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Friend Requests</DialogTitle>
-          <DialogDescription>
-            Manage your friend requests
-          </DialogDescription>
+          <DialogDescription>Manage your friend requests</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -80,26 +83,24 @@ export function FriendRequestsModal({ open, onOpenChange }: FriendRequestsModalP
             ) : pendingRequests.length > 0 ? (
               <div className="space-y-4">
                 {pendingRequests.map((request: FriendRequest) => {
-                  const user = request.sender || { id: request.senderId, username: "Unknown User" } as User;
+                  const user =
+                    request.sender || ({ id: request.senderId, username: "Unknown User" } as User);
                   return (
-                    <div 
-                      key={request.id} 
-                      className="flex items-center gap-4 rounded-lg border p-4"
-                    >
+                    <div key={request.id} className="flex items-center gap-4 rounded-lg border p-4">
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={user.avatar || undefined} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
                           {getInitials(user.username)}
                         </AvatarFallback>
                       </Avatar>
-                      
+
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold truncate">{user.username}</p>
                         <p className="text-sm text-muted-foreground truncate">
                           wants to be your friend
                         </p>
                       </div>
-                      
+
                       <div className="flex gap-2">
                         <Button
                           size="sm"
