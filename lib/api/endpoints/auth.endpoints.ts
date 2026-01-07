@@ -1,8 +1,15 @@
-import { createApi } from '@reduxjs/toolkit/query/react';
+import { EndpointBuilder } from '@reduxjs/toolkit/query/react';
+import { baseApiSlice } from '../base-api';
+import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
+import type { RootState } from '@/lib/store';
+import type { User } from '@/types';
 
 // Auth endpoints
-export const authEndpoints = (builder: ReturnType<typeof createApi>['injectEndpoints']) => ({
-  login: builder.mutation({
+export const authEndpoints = (builder: EndpointBuilder<BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, Record<string, unknown>, Record<string, unknown>>, string, string>) => ({
+  login: builder.mutation<
+    { data: { user: User; accessToken: string; refreshToken: string } },
+    { email: string; password: string }
+  >({
     query: (credentials: { email: string; password: string }) => ({
       url: '/auth/login',
       method: 'POST',
@@ -10,8 +17,11 @@ export const authEndpoints = (builder: ReturnType<typeof createApi>['injectEndpo
     }),
     invalidatesTags: ['Auth'],
   }),
-  
-  register: builder.mutation({
+
+  register: builder.mutation<
+    { data: { user: User; accessToken: string; refreshToken: string } },
+    { username: string; email: string; password: string }
+  >({
     query: (userData: { username: string; email: string; password: string }) => ({
       url: '/auth/register',
       method: 'POST',
@@ -19,8 +29,11 @@ export const authEndpoints = (builder: ReturnType<typeof createApi>['injectEndpo
     }),
     invalidatesTags: ['Auth'],
   }),
-  
-  logout: builder.mutation({
+
+  logout: builder.mutation<
+    { data: { message: string } },
+    string
+  >({
     query: (refreshToken: string) => ({
       url: '/auth/logout',
       method: 'POST',
@@ -28,21 +41,30 @@ export const authEndpoints = (builder: ReturnType<typeof createApi>['injectEndpo
     }),
     invalidatesTags: ['Auth'],
   }),
-  
-  logoutAll: builder.mutation({
+
+  logoutAll: builder.mutation<
+    { data: { message: string } },
+    void
+  >({
     query: () => ({
       url: '/auth/logout-all',
       method: 'POST',
     }),
     invalidatesTags: ['Auth'],
   }),
-  
-  getCurrentUser: builder.query({
+
+  getCurrentUser: builder.query<
+    User,
+    void
+  >({
     query: () => '/auth/me',
     providesTags: ['Auth'],
   }),
-  
-  refreshToken: builder.mutation({
+
+  refreshToken: builder.mutation<
+    { data: { accessToken: string; refreshToken?: string } },
+    string
+  >({
     query: (refreshToken: string) => ({
       url: '/auth/refresh',
       method: 'POST',

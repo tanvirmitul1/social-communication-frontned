@@ -183,7 +183,10 @@ export function NewConversationModal({ open, onOpenChange }: NewConversationModa
                           } catch (err) {
                             console.error("Failed to send friend request:", err);
                             const error = err as { data?: { message?: string } };
-                            alert(error?.data?.message || 'Failed to send friend request. Please try again.');
+                            alert(
+                              error?.data?.message ||
+                                "Failed to send friend request. Please try again."
+                            );
                           }
                         }}
                         disabled={isSendingRequest}

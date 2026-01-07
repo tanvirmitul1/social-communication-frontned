@@ -51,10 +51,10 @@ export function FriendRequestsModal({ open, onOpenChange }: FriendRequestsModalP
       console.error("Failed to accept friend request:", err);
       const error = err as { data?: { message?: string; error?: string } };
       // Show user-friendly error message based on error type
-      if (error?.data?.error?.includes('Unique constraint failed')) {
-        alert('Friend request already accepted or relationship already exists');
+      if (error?.data?.error?.includes("Unique constraint failed")) {
+        alert("Friend request already accepted or relationship already exists");
       } else {
-        alert(error?.data?.message || 'Failed to accept friend request. Please try again.');
+        alert(error?.data?.message || "Failed to accept friend request. Please try again.");
       }
     }
   };
@@ -66,7 +66,7 @@ export function FriendRequestsModal({ open, onOpenChange }: FriendRequestsModalP
     } catch (err) {
       console.error("Failed to reject friend request:", err);
       const error = err as { data?: { message?: string } };
-      alert(error?.data?.message || 'Failed to reject friend request. Please try again.');
+      alert(error?.data?.message || "Failed to reject friend request. Please try again.");
     }
   };
 
