@@ -81,7 +81,11 @@ export function truncate(text: string, maxLength: number): string {
 /**
  * Get initials from name
  */
-export function getInitials(name: string): string {
+export function getInitials(name?: string): string {
+  if (!name) {
+    return "?";
+  }
+  
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) {
     return parts[0].substring(0, 2).toUpperCase();
