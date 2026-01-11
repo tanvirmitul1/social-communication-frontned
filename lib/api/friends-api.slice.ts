@@ -1,12 +1,14 @@
 import { baseApiSlice } from './base-api';
 import { API_ROUTES } from '@/lib/constants';
+import type { User, ApiResponse } from '@/types';
 
 // Define the friends API slice
 export const friendsApiSlice = baseApiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // Get friends list
-    getFriends: builder.query({
+    getFriends: builder.query<User[], void>({
       query: () => API_ROUTES.FRIENDS.LIST,
+      transformResponse: (response: ApiResponse<User[]>) => response.data || [],
       providesTags: ['User'],
     }),
 

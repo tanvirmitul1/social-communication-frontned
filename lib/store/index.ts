@@ -9,6 +9,7 @@ import messagesReducer from "./slices/messages.slice";
 import conversationsReducer from "./slices/conversations.slice";
 import uiReducer from "./slices/ui.slice";
 import { apiSlice } from "../api/api.slice";
+import { feedApiSlice } from "../api/feed-api.slice";
 
 // Persist config for auth slice
 const authPersistConfig: import("redux-persist").PersistConfig<AuthState> = {

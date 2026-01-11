@@ -103,7 +103,11 @@ export const baseApiSlice = createApi({
     'Message',
     'Conversation', 
     'Group',
-    'Call'
+    'Call',
+    'Post',
+    'Comment',
+    'FriendRequest',
+    'Friend'
   ],
   endpoints: () => ({}), // Empty endpoints - will be injected via injectEndpoints
 });

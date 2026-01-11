@@ -17,6 +17,7 @@ export const API_ROUTES = {
     BY_ID: (id: string) => `/users/${id}`,
     SEARCH: "/users",
     PRESENCE: (id: string) => `/users/${id}/presence`,
+    SUGGESTIONS: "/users/suggestions",
   },
   FRIEND_REQUESTS: {
     BASE: "/users/friend-requests",
@@ -60,6 +61,21 @@ export const API_ROUTES = {
     BASE: "/health",
     READY: "/health/ready",
     METRICS: "/metrics",
+  },
+  POSTS: {
+    BASE: "/posts",
+    BY_ID: (id: string) => `/posts/${id}`,
+    FEED: "/posts/feed",
+    USER_POSTS: (userId: string) => `/users/${userId}/posts`,
+    REACT: (id: string) => `/posts/${id}/react`,
+    SAVE: (id: string) => `/posts/${id}/save`,
+    SHARE: (id: string) => `/posts/${id}/share`,
+    SAVED: "/posts/saved",
+    COMMENTS: (postId: string) => `/posts/${postId}/comments`,
+    COMMENT_BY_ID: (postId: string, commentId: string) => `/posts/${postId}/comments/${commentId}`,
+    COMMENT_REPLIES: (postId: string, commentId: string) => `/posts/${postId}/comments/${commentId}/replies`,
+    COMMENT_REACT: (postId: string, commentId: string) => `/posts/${postId}/comments/${commentId}/react`,
+    REACTIONS: (id: string) => `/posts/${id}/reactions`,
   },
 } as const;
 

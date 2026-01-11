@@ -12,6 +12,7 @@ import { groupApiSlice } from "./group-api";
 import { callApiSlice } from "./call-api";
 import { friendRequestApiSlice } from "./friend-request-api.slice";
 import { friendsApiSlice } from "./friends-api.slice";
+import { feedApiSlice } from "./feed-api.slice";
 
 import { 
   useLoginMutation,
@@ -79,6 +80,29 @@ import {
   useRejectCallMutation,
 } from "./call-api";
 
+import {
+  useGetFeedQuery,
+  useGetUserPostsQuery,
+  useGetPostQuery,
+  useCreatePostMutation,
+  useUpdatePostMutation,
+  useDeletePostMutation,
+  useReactToPostMutation,
+  useUnreactToPostMutation,
+  useGetPostReactionsQuery,
+  useGetPostCommentsQuery,
+  useGetCommentRepliesQuery,
+  useCreateCommentMutation,
+  useUpdateCommentMutation,
+  useDeleteCommentMutation,
+  useReactToCommentMutation,
+  useUnreactToCommentMutation,
+  useSavePostMutation,
+  useUnsavePostMutation,
+  useSharePostMutation,
+  useGetSavedPostsQuery,
+} from "./feed-api.slice";
+
 // Export RTK Query hooks
 export {
   // Auth hooks
@@ -139,6 +163,28 @@ export {
   useEndCallMutation,
   useLeaveCallMutation,
   useRejectCallMutation,
+  
+  // Feed hooks
+  useGetFeedQuery,
+  useGetUserPostsQuery,
+  useGetPostQuery,
+  useCreatePostMutation,
+  useUpdatePostMutation,
+  useDeletePostMutation,
+  useReactToPostMutation,
+  useUnreactToPostMutation,
+  useGetPostReactionsQuery,
+  useGetPostCommentsQuery,
+  useGetCommentRepliesQuery,
+  useCreateCommentMutation,
+  useUpdateCommentMutation,
+  useDeleteCommentMutation,
+  useReactToCommentMutation,
+  useUnreactToCommentMutation,
+  useSavePostMutation,
+  useUnsavePostMutation,
+  useSharePostMutation,
+  useGetSavedPostsQuery,
 };
 
 // Also export the api slice itself
@@ -152,6 +198,7 @@ export { groupApiSlice };
 export { callApiSlice };
 export { friendRequestApiSlice };
 export { friendsApiSlice };
+export { feedApiSlice };
 
 // Re-export for convenience
 export const api = apiSlice;

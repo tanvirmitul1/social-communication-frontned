@@ -265,6 +265,9 @@ export interface ChatListResponse {
   lastMessageAt: string;
 }
 
+// Feed Types
+export * from './feed.types';
+
 // Utility Types
 export type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type WithRequired<T, K extends keyof T> = T & Required<Pick<T, K>>;
