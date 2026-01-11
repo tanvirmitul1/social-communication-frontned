@@ -12,7 +12,7 @@ export default function Home() {
   useEffect(() => {
     // Check if user is authenticated
     if (isAuthenticated) {
-      router.replace("/messages");
+      router.replace("/feed");
     } else {
       router.replace("/login");
     }

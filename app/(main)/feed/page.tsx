@@ -6,8 +6,8 @@ import { useGetFeedQuery } from "@/lib/api/feed-api.slice";
 import { CreatePostCard } from "@/components/feed/create-post-card";
 import { PostCard } from "@/components/feed/post-card";
 import { FeedSkeleton } from "@/components/feed/feed-skeleton";
+import { FeedHeader } from "@/components/feed/feed-header";
 import { FriendsSidebar } from "@/components/feed/friends-sidebar";
-import { MessagePopup } from "@/components/feed/message-popup";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Home, Compass, TrendingUp, Bookmark, RefreshCw, Sparkles } from "lucide-react";
@@ -73,10 +73,13 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Header */}
+      <FeedHeader />
+      
       {/* Main Layout */}
       <div className="flex">
         {/* Left Sidebar - Navigation */}
-        <aside className="w-64 border-r bg-card/80 backdrop-blur-sm h-screen sticky top-0 hidden lg:block">
+        <aside className="w-64 border-r bg-card/80 backdrop-blur-sm h-[calc(100vh-64px)] sticky top-16 hidden lg:block">
           <div className="p-4">
             <div className="flex items-center gap-2 mb-6">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -240,7 +243,6 @@ export default function FeedPage() {
           </div>
         </main>
 
-        {/* Right Sidebar - Friends */}
         <FriendsSidebar onOpenChat={handleOpenChat} />
       </div>
 

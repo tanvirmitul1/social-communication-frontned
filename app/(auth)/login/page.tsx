@@ -45,7 +45,7 @@ export default function LoginPage() {
           })
         );
 
-        router.push("/messages");
+        router.push("/feed");
       }
     } catch (err: unknown) {
       // Handle error based on type

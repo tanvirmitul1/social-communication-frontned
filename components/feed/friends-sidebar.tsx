@@ -21,6 +21,7 @@ interface FriendsSidebarProps {
 }
 
 export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
+  const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("friends");
 
@@ -47,8 +48,15 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
     try {
       await sendFriendRequest({ receiverId: userId }).unwrap();
       toast.success(`Friend request sent to ${username}`);
+      setSentRequests(prev => new Set([...prev, userId]));
     } catch (error: any) {
-      toast.error(error?.message || "Failed to send friend request");
+      const errorMessage = error?.data?.message || error?.message || "Failed to send friend request";
+      if (errorMessage.includes("already sent") || errorMessage.includes("pending")) {
+        toast.error(`Friend request already sent to ${username}`);
+        setSentRequests(prev => new Set([...prev, userId]));
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -71,7 +79,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   };
 
   return (
-    <div className="w-80 border-l bg-card/50 backdrop-blur-sm h-screen sticky top-0 hidden xl:block">
+    <div className="w-80 border-l bg-card/50 backdrop-blur-sm h-[calc(100vh-64px)] sticky top-16 hidden xl:block">
       <div className="p-4 border-b bg-background/80">
         <h3 className="font-semibold text-lg">Friends</h3>
         <p className="text-xs text-muted-foreground mt-1">
@@ -174,7 +182,9 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                 ))
               ) : searchQuery.length >= 2 ? (
                 searchResults?.data?.length > 0 ? (
-                  searchResults.data.map((user: User) => (
+                  searchResults.data
+                    .filter((user: User) => !sentRequests.has(user.id))
+                    .map((user: User) => (
                     <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user.avatar || undefined} />
@@ -204,7 +214,9 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   <div className="px-2 py-1 mb-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Suggested for you</p>
                   </div>
-                  {suggestions.map((user: User) => (
+                  {suggestions
+                    .filter((user: User) => !sentRequests.has(user.id))
+                    .map((user: User) => (
                     <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user.avatar || undefined} />
