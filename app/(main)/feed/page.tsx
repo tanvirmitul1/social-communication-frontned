@@ -8,6 +8,7 @@ import { PostCard } from "@/components/feed/post-card";
 import { FeedSkeleton } from "@/components/feed/feed-skeleton";
 import { FeedHeader } from "@/components/feed/feed-header";
 import { FriendsSidebar } from "@/components/feed/friends-sidebar";
+import { MessagePopup } from "@/components/feed/message-popup";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Home, Compass, TrendingUp, Bookmark, RefreshCw, Sparkles } from "lucide-react";
