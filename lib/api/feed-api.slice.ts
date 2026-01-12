@@ -157,7 +157,6 @@ export const feedApiSlice = baseApiSlice.injectEndpoints({
           feedPatches.forEach(patch => patch.undo());
         }
       },
-      invalidatesTags: (result, error, { id }) => [{ type: 'Post', id }],
     }),
 
     // Update reaction on post
@@ -196,7 +195,6 @@ export const feedApiSlice = baseApiSlice.injectEndpoints({
           feedPatches.forEach(patch => patch.undo());
         }
       },
-      invalidatesTags: (result, error, { id }) => [{ type: 'Post', id }],
     }),
 
     // Remove reaction from post
@@ -237,7 +235,6 @@ export const feedApiSlice = baseApiSlice.injectEndpoints({
           feedPatches.forEach(patch => patch.undo());
         }
       },
-      invalidatesTags: (result, error, id) => [{ type: 'Post', id }],
     }),
 
     // Get post reactions
