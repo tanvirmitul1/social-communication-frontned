@@ -113,32 +113,32 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   };
 
   return (
-    <div className="w-80 shrink-0 border-l border-border/50 glass h-full hidden xl:block overflow-hidden">
+    <div className="w-80 shrink-0 border-l border-border/50 glass sticky top-0 h-[calc(100vh-64px)] hidden lg:block overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
       <div className="p-5 border-b border-border/50 bg-linear-to-b from-primary/5 to-transparent">
-        <h3 className="font-semibold text-lg">Friends</h3>
+        <h3 className="font-semibold text-lg truncate">Friends</h3>
         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
             {onlineFriends.length} online
           </span>
-          <span className="text-border">•</span>
-          <span>{allFriends.length} total</span>
+          <span className="text-border shrink-0">•</span>
+          <span className="truncate">{allFriends.length} total</span>
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-[calc(100%-73px)]">
         <TabsList className="grid w-full grid-cols-3 m-2 shrink-0">
-          <TabsTrigger value="friends" className="text-xs">
+          <TabsTrigger value="friends" className="text-xs px-1">
             <Users className="h-3 w-3 mr-1" />
-            Friends
+            <span className="hidden sm:inline">Friends</span>
           </TabsTrigger>
-          <TabsTrigger value="suggestions" className="text-xs">
+          <TabsTrigger value="suggestions" className="text-xs px-1">
             <UserPlus className="h-3 w-3 mr-1" />
-            Find
+            <span className="hidden sm:inline">Find</span>
           </TabsTrigger>
-          <TabsTrigger value="requests" className="text-xs relative">
+          <TabsTrigger value="requests" className="text-xs relative px-1">
             <UserCheck className="h-3 w-3 mr-1" />
-            Requests
+            <span className="hidden sm:inline">Requests</span>
             {pendingRequests.length > 0 && (
               <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-red-500">
                 {pendingRequests.length}
@@ -152,8 +152,8 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
             {friendsLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1 space-y-1">
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1 min-w-0">
                     <Skeleton className="h-3 w-20" />
                     <Skeleton className="h-2 w-16" />
                   </div>
@@ -167,7 +167,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   className="w-full justify-start gap-3 h-auto p-2.5 hover:bg-muted/50 rounded-xl transition-all duration-200 group/friend"
                   onClick={() => onOpenChat(friend.id, friend.username, friend.avatar)}
                 >
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <Avatar className="h-10 w-10 ring-2 ring-border/30 group-hover/friend:ring-primary/30 transition-all">
                       <AvatarImage src={friend.avatar || undefined} />
                       <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
@@ -184,9 +184,9 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       {friend.isOnline && (
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-success shrink-0" />
                       )}
-                      {friend.isOnline ? "Active now" : "Offline"}
+                      <span className="truncate">{friend.isOnline ? "Active now" : "Offline"}</span>
                     </p>
                   </div>
                   <MessageCircle className="h-4 w-4 text-muted-foreground group-hover/friend:text-primary transition-colors shrink-0 opacity-0 group-hover/friend:opacity-100" />
@@ -208,7 +208,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
               placeholder="Search users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="mb-2"
+              className="mb-2 w-full"
             />
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
@@ -216,12 +216,12 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
               {searchLoading || (suggestionsLoading && searchQuery.length < 2) ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1 space-y-1">
+                    <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-1 min-w-0">
                       <Skeleton className="h-3 w-20" />
                       <Skeleton className="h-2 w-16" />
                     </div>
-                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-16 shrink-0" />
                   </div>
                 ))
               ) : searchQuery.length >= 2 ? (
@@ -233,7 +233,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                         key={user.id}
                         className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/30 transition-colors group/user"
                       >
-                        <Avatar className="h-10 w-10 ring-2 ring-border/30">
+                        <Avatar className="h-10 w-10 ring-2 ring-border/30 shrink-0">
                           <AvatarImage src={user.avatar || undefined} />
                           <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
                             {getInitials(user.username)}
@@ -247,7 +247,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                           size="sm"
                           variant="outline"
                           onClick={() => handleSendRequest(user.id, user.username)}
-                          className="h-8 px-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                          className="h-8 px-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all shrink-0"
                           aria-label={`Send friend request to ${user.username}`}
                         >
                           <UserPlus className="h-3 w-3" />
@@ -262,7 +262,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
               ) : suggestions && suggestions.length > 0 ? (
                 <>
                   <div className="px-2 py-1 mb-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
                       Suggested for you
                     </p>
                   </div>
@@ -273,7 +273,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                         key={user.id}
                         className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
                       >
-                        <Avatar className="h-10 w-10">
+                        <Avatar className="h-10 w-10 shrink-0">
                           <AvatarImage src={user.avatar || undefined} />
                           <AvatarFallback className="text-xs">
                             {getInitials(user.username)}
@@ -287,7 +287,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                           size="sm"
                           variant="outline"
                           onClick={() => handleSendRequest(user.id, user.username)}
-                          className="h-8 px-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50"
+                          className="h-8 px-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50 shrink-0"
                         >
                           <UserPlus className="h-3 w-3" />
                         </Button>
@@ -310,12 +310,12 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
             {requestsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1 space-y-1">
+                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1 min-w-0">
                     <Skeleton className="h-3 w-20" />
                     <Skeleton className="h-2 w-16" />
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0">
                     <Skeleton className="h-8 w-8" />
                     <Skeleton className="h-8 w-8" />
                   </div>
@@ -327,7 +327,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   key={request.id}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
                 >
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-10 w-10 shrink-0">
                     <AvatarImage src={request.sender?.avatar || undefined} />
                     <AvatarFallback className="text-xs">
                       {getInitials(request.sender?.username || "U")}
@@ -335,9 +335,9 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{request.sender?.username}</p>
-                    <p className="text-xs text-muted-foreground">Wants to be friends</p>
+                    <p className="text-xs text-muted-foreground truncate">Wants to be friends</p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0">
                     <Button
                       size="sm"
                       variant="outline"

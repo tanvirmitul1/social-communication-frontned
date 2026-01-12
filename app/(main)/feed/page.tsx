@@ -107,11 +107,11 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
+    <div className="h-[calc(100vh-64px)] bg-gradient-to-br from-background via-background to-muted/20 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
       {/* Main Layout */}
-      <div className="flex max-w-full h-full">
+      <div className="flex max-w-full min-h-full">
         {/* Left Sidebar - Navigation */}
-        <aside className="w-64 shrink-0 border-r bg-card/80 backdrop-blur-sm h-full hidden lg:block overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+        <aside className="w-64 shrink-0 border-r bg-card/80 backdrop-blur-sm sticky top-0 h-[calc(100vh-64px)] hidden 2xl:block overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
           <div className="p-4">
             <nav className="space-y-2">
               <Button
@@ -150,7 +150,7 @@ export default function FeedPage() {
         </aside>
 
         {/* Center Feed */}
-        <main className="flex-1 min-w-0 max-w-2xl mx-auto h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+        <main className="flex-1 min-w-0 max-w-2xl mx-auto">
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b border-border/50 lg:hidden">
             <div className="p-4">
               <Tabs value={feedType} onValueChange={(v) => setFeedType(v as FeedType)}>

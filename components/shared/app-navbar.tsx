@@ -29,7 +29,7 @@ export function AppNavbar({ currentPage }: AppNavbarProps) {
   const dispatch = useAppDispatch();
   const { theme, setTheme } = useTheme();
   const { user } = useAppSelector((state) => state.auth);
-  const { unreadCount } = useAppSelector((state) => state.messages);
+  // const { unreadCount } = useAppSelector((state) => state.messages);
 
   const [mounted, setMounted] = useState(false);
 
@@ -49,7 +49,7 @@ export function AppNavbar({ currentPage }: AppNavbarProps) {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/50 glass backdrop-blur-md">
-      <div className="container mx-auto px-4">
+      <div className="mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo & Brand */}
           <div className="flex items-center gap-2">
@@ -97,14 +97,14 @@ export function AppNavbar({ currentPage }: AppNavbarProps) {
               >
                 <MessageSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">Messages</span>
-                {unreadCount > 0 && (
+                {/* {unreadCount > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
                   >
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
-                )}
+                )} */}
               </Button>
             </nav>
 
@@ -119,11 +119,7 @@ export function AppNavbar({ currentPage }: AppNavbarProps) {
                   className="hover:bg-muted/50 transition-colors"
                   aria-label="Toggle theme"
                 >
-                  {theme === "dark" ? (
-                    <Sun className="h-5 w-5" />
-                  ) : (
-                    <Moon className="h-5 w-5" />
-                  )}
+                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
               )}
 
