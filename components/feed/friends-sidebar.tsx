@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { getInitials } from "@/lib/utils/format";
 import { MessageCircle, UserPlus, Check, X, Users, UserCheck } from "lucide-react";
 import { toast } from "sonner";
-import type { User } from "@/types";
+import type { User, FriendRequest } from "@/types";
 
 interface FriendsSidebarProps {
   onOpenChat: (userId: string, username: string, avatar?: string | null) => void;
@@ -26,7 +26,8 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   const [activeTab, setActiveTab] = useState("friends");
 
   const { data: friends, isLoading: friendsLoading } = useGetFriendsQuery();
-  const { data: friendRequests, isLoading: requestsLoading } = useGetPendingFriendRequestsQuery();
+  const { data: friendRequests, isLoading: requestsLoading } = useGetPendingFriendRequestsQuery(undefined);
+  const pendingRequests = friendRequests?.data || [];
   const { data: searchResults, isLoading: searchLoading } = useSearchUsersQuery(
     { query: searchQuery, limit: 10 },
     { skip: searchQuery.length < 2 }
@@ -42,15 +43,23 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
 
   const onlineFriends = Array.isArray(friends) ? friends.filter((friend: User) => friend.isOnline) : [];
   const allFriends = Array.isArray(friends) ? friends : [];
-  const pendingRequests = Array.isArray(friendRequests?.data) ? friendRequests.data : [];
+
 
   const handleSendRequest = async (userId: string, username: string) => {
     try {
       await sendFriendRequest({ receiverId: userId }).unwrap();
       toast.success(`Friend request sent to ${username}`);
       setSentRequests(prev => new Set([...prev, userId]));
-    } catch (error: any) {
-      const errorMessage = error?.data?.message || error?.message || "Failed to send friend request";
+    } catch (err: unknown) {
+      let errorMessage = "Failed to send friend request";
+      if (typeof err === "string") {
+        errorMessage = err;
+      } else if (err && typeof err === "object" && "data" in err) {
+        const errorData = (err as { data?: { message?: string; error?: string } }).data;
+        errorMessage = errorData?.message || errorData?.error || errorMessage;
+      } else if (err && typeof err === "object" && "message" in err) {
+        errorMessage = (err as Error).message;
+      }
       if (errorMessage.includes("already sent") || errorMessage.includes("pending")) {
         toast.error(`Friend request already sent to ${username}`);
         setSentRequests(prev => new Set([...prev, userId]));
@@ -64,8 +73,17 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
     try {
       await acceptRequest(requestId).unwrap();
       toast.success(`Accepted friend request from ${username}`);
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to accept request");
+    } catch (err: unknown) {
+      let errorMessage = "Failed to accept request";
+      if (typeof err === "string") {
+        errorMessage = err;
+      } else if (err && typeof err === "object" && "data" in err) {
+        const errorData = (err as { data?: { message?: string; error?: string } }).data;
+        errorMessage = errorData?.message || errorData?.error || errorMessage;
+      } else if (err && typeof err === "object" && "message" in err) {
+        errorMessage = (err as Error).message;
+      }
+      toast.error(errorMessage);
     }
   };
 
@@ -73,8 +91,17 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
     try {
       await rejectRequest(requestId).unwrap();
       toast.success(`Rejected friend request from ${username}`);
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to reject request");
+    } catch (err: unknown) {
+      let errorMessage = "Failed to reject request";
+      if (typeof err === "string") {
+        errorMessage = err;
+      } else if (err && typeof err === "object" && "data" in err) {
+        const errorData = (err as { data?: { message?: string; error?: string } }).data;
+        errorMessage = errorData?.message || errorData?.error || errorMessage;
+      } else if (err && typeof err === "object" && "message" in err) {
+        errorMessage = (err as Error).message;
+      }
+      toast.error(errorMessage);
     }
   };
 
@@ -181,7 +208,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   </div>
                 ))
               ) : searchQuery.length >= 2 ? (
-                searchResults?.data?.length > 0 ? (
+                searchResults?.data && searchResults.data.length > 0 ? (
                   searchResults.data
                     .filter((user: User) => !sentRequests.has(user.id))
                     .map((user: User) => (
@@ -209,13 +236,12 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                     <p className="text-sm text-muted-foreground">No users found</p>
                   </div>
                 )
-              ) : suggestions?.length > 0 ? (
+              ) : suggestions && suggestions.length > 0 ? (
                 <>
                   <div className="px-2 py-1 mb-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Suggested for you</p>
                   </div>
-                  {suggestions
-                    .filter((user: User) => !sentRequests.has(user.id))
+                  {suggestions?.filter((user: User) => !sentRequests.has(user.id))
                     .map((user: User) => (
                     <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
                       <Avatar className="h-10 w-10">
@@ -266,7 +292,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   </div>
                 ))
               ) : pendingRequests.length > 0 ? (
-                pendingRequests.map((request: any) => (
+                pendingRequests.map((request: FriendRequest) => (
                   <div key={request.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={request.sender?.avatar || undefined} />
@@ -282,7 +308,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleAcceptRequest(request.id, request.sender?.username)}
+                        onClick={() => handleAcceptRequest(request.id, request.sender?.username || "User")}
                         className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
                       >
                         <Check className="h-3 w-3" />
@@ -290,7 +316,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRejectRequest(request.id, request.sender?.username)}
+                        onClick={() => handleRejectRequest(request.id, request.sender?.username || "User")}
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-3 w-3" />

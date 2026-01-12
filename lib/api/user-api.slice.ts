@@ -7,7 +7,7 @@ export const userApiSlice = baseApiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getUser: builder.query<User, string>({
       query: (id) => API_ROUTES.USERS.BY_ID(id),
-      transformResponse: (response: ApiResponse<User>) => response.data,
+      transformResponse: (response: ApiResponse<User>) => response.data || { id: '', username: '', email: '', role: 'USER', isOnline: false, lastSeen: '', createdAt: '', updatedAt: '' },
       providesTags: (result, error, id) => [{ type: 'User', id }],
     }),
     

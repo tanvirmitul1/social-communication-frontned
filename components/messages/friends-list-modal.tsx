@@ -34,7 +34,7 @@ export function FriendsListModal({ open, onOpenChange }: FriendsListModalProps) 
     skip: !open, // Only fetch when modal is open
   });
 
-  const friends = friendsData?.data || [];
+  const friends = friendsData || [];
 
   const handleRemoveFriend = async (friendId: string) => {
     try {
