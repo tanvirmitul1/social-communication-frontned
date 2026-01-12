@@ -113,7 +113,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   };
 
   return (
-    <div className="w-80 shrink-0 border-l border-border/50 glass sticky top-0 h-[calc(100vh-64px)] hidden lg:block overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+    <div className="w-80 shrink-0 border-l border-border/50 glass sticky top-0 h-[calc(100vh-64px)] hidden lg:block overflow-hidden">
       <div className="p-5 border-b border-border/50 bg-linear-to-b from-primary/5 to-transparent">
         <h3 className="font-semibold text-lg truncate">Friends</h3>
         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
@@ -147,7 +147,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="friends" className="mt-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+        <TabsContent value="friends" className="mt-0 flex-1 overflow-y-auto">
           <div className="p-2 space-y-1">
             {friendsLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
@@ -211,7 +211,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
               className="mb-2 w-full"
             />
           </div>
-          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+          <div className="flex-1 overflow-y-auto">
             <div className="p-2 space-y-1">
               {searchLoading || (suggestionsLoading && searchQuery.length < 2) ? (
                 Array.from({ length: 4 }).map((_, i) => (
@@ -305,7 +305,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="requests" className="mt-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+        <TabsContent value="requests" className="mt-0 flex-1 overflow-y-auto">
           <div className="p-2 space-y-1">
             {requestsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
