@@ -12,6 +12,8 @@ class APIClient {
   private client: AxiosInstance;
   private isRefreshing = false;
   private refreshSubscribers: Array<(token: string) => void> = [];
+  private refreshAttempts = 0;
+  private readonly MAX_REFRESH_ATTEMPTS = 2;
 
   constructor() {
     this.client = axios.create({
@@ -62,6 +64,13 @@ class APIClient {
 
         // Handle 401 Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
+          // Check if we've exceeded max refresh attempts
+          if (this.refreshAttempts >= this.MAX_REFRESH_ATTEMPTS) {
+            this.clearAuth();
+            window.location.href = "/login";
+            return Promise.reject(new Error("Maximum refresh attempts exceeded"));
+          }
+
           if (this.isRefreshing) {
             // Wait for token refresh to complete
             return new Promise((resolve) => {
@@ -76,6 +85,7 @@ class APIClient {
 
           originalRequest._retry = true;
           this.isRefreshing = true;
+          this.refreshAttempts++;
 
           try {
             const refreshToken = storage.get<string>(STORAGE_KEYS.REFRESH_TOKEN);
@@ -95,6 +105,9 @@ class APIClient {
             // Save new tokens
             storage.set(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
             storage.set(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+
+            // Reset refresh attempts on successful refresh
+            this.refreshAttempts = 0;
 
             // Update default header
             if (originalRequest.headers) {
@@ -154,6 +167,8 @@ class APIClient {
     storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
     storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
     storage.remove(STORAGE_KEYS.USER);
+    // Reset refresh attempts when clearing auth
+    this.refreshAttempts = 0;
   }
 
   // HTTP Methods
