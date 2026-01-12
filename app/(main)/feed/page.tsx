@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useInView } from "react-intersection-observer";
+import { useAppSelector, useAppDispatch } from "@/lib/store";
+import { addMessage } from "@/lib/store/slices/messages.slice";
+import { socketManager } from "@/lib/socket/socket-manager";
 import { useGetFeedQuery } from "@/lib/api/feed-api.slice";
 import { CreatePostCard } from "@/components/feed/create-post-card";
 import { PostCard } from "@/components/feed/post-card";
@@ -23,6 +26,8 @@ interface ChatWindow {
 }
 
 export default function FeedPage() {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
   const [feedType, setFeedType] = useState<FeedType>("following");
   const [cursor, setCursor] = useState<string | undefined>();
   const [chatWindows, setChatWindows] = useState<ChatWindow[]>([]);
@@ -42,6 +47,30 @@ export default function FeedPage() {
       setCursor(data.nextCursor || undefined);
     }
   }, [inView, data, isFetching]);
+
+  // WebSocket message handling
+  useEffect(() => {
+    const handleNewMessage = (message: any) => {
+      // Add message to Redux store
+      const conversationId = message.groupId || message.senderId;
+      dispatch(addMessage({ conversationId, message }));
+      
+      // Auto-open chat if not already open and message is from another user
+      if (message.senderId !== user?.id) {
+        const isAlreadyOpen = chatWindows.some(chat => chat.userId === message.senderId);
+        if (!isAlreadyOpen && chatWindows.length < 3) {
+          // Find sender info (you might need to fetch this from API)
+          handleOpenChat(message.senderId, message.senderUsername || 'User', message.senderAvatar);
+        }
+      }
+    };
+
+    socketManager.onMessageReceived(handleNewMessage);
+    
+    return () => {
+      socketManager.removeAllListeners('message:received');
+    };
+  }, [dispatch, user?.id, chatWindows]);
 
   // Reset cursor when feed type changes
   useEffect(() => {

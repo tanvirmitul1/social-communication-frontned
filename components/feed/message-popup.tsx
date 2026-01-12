@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Minus, Send } from "lucide-react";
 import { getInitials } from "@/lib/utils/format";
 import { socketManager } from "@/lib/socket/socket-manager";
+import { playMessageSound } from "@/lib/utils/sound";
 import type { SendMessagePayload } from "@/types";
 
 interface MessagePopupProps {
@@ -65,10 +66,24 @@ export function MessagePopup({ userId, username, avatar, onClose, index }: Messa
     }
   };
 
+  // Play message sound when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.senderId !== user?.id) {
+        // Play sound for received messages
+        playMessageSound();
+      }
+    }
+  }, [messages, user?.id]);
+
   useEffect(() => {
     // Scroll to bottom when new messages arrive
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
     }
   }, [messages]);
 
