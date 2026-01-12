@@ -113,7 +113,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   };
 
   return (
-    <div className="w-80 border-l border-border/50 glass h-[calc(100vh-64px)] sticky top-16 hidden xl:block">
+    <div className="w-80 shrink-0 border-l border-border/50 glass h-full hidden xl:block overflow-hidden">
       <div className="p-5 border-b border-border/50 bg-linear-to-b from-primary/5 to-transparent">
         <h3 className="font-semibold text-lg">Friends</h3>
         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
@@ -126,8 +126,8 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-[calc(100vh-73px)]">
-        <TabsList className="grid w-full grid-cols-3 m-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-[calc(100%-73px)]">
+        <TabsList className="grid w-full grid-cols-3 m-2 shrink-0">
           <TabsTrigger value="friends" className="text-xs">
             <Users className="h-3 w-3 mr-1" />
             Friends
@@ -147,65 +147,63 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="friends" className="mt-0 h-full">
-          <ScrollArea className="h-[calc(100%-60px)]">
-            <div className="p-2 space-y-1">
-              {friendsLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1 space-y-1">
-                      <Skeleton className="h-3 w-20" />
-                      <Skeleton className="h-2 w-16" />
-                    </div>
+        <TabsContent value="friends" className="mt-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+          <div className="p-2 space-y-1">
+            {friendsLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-2 w-16" />
                   </div>
-                ))
-              ) : allFriends.length > 0 ? (
-                allFriends.map((friend: User) => (
-                  <Button
-                    key={friend.id}
-                    variant="ghost"
-                    className="w-full justify-start gap-3 h-auto p-2.5 hover:bg-muted/50 rounded-xl transition-all duration-200 group/friend"
-                    onClick={() => onOpenChat(friend.id, friend.username, friend.avatar)}
-                  >
-                    <div className="relative">
-                      <Avatar className="h-10 w-10 ring-2 ring-border/30 group-hover/friend:ring-primary/30 transition-all">
-                        <AvatarImage src={friend.avatar || undefined} />
-                        <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                          {getInitials(friend.username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {friend.isOnline && (
-                        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-background animate-pulse" />
-                      )}
-                    </div>
-                    <div className="flex-1 text-left min-w-0">
-                      <p className="text-sm font-medium truncate group-hover/friend:text-primary transition-colors">
-                        {friend.username}
-                      </p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        {friend.isOnline && (
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
-                        )}
-                        {friend.isOnline ? "Active now" : "Offline"}
-                      </p>
-                    </div>
-                    <MessageCircle className="h-4 w-4 text-muted-foreground group-hover/friend:text-primary transition-colors shrink-0 opacity-0 group-hover/friend:opacity-100" />
-                  </Button>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No friends yet</p>
-                  <p className="text-xs text-muted-foreground">Find people to connect with</p>
                 </div>
-              )}
-            </div>
-          </ScrollArea>
+              ))
+            ) : allFriends.length > 0 ? (
+              allFriends.map((friend: User) => (
+                <Button
+                  key={friend.id}
+                  variant="ghost"
+                  className="w-full justify-start gap-3 h-auto p-2.5 hover:bg-muted/50 rounded-xl transition-all duration-200 group/friend"
+                  onClick={() => onOpenChat(friend.id, friend.username, friend.avatar)}
+                >
+                  <div className="relative">
+                    <Avatar className="h-10 w-10 ring-2 ring-border/30 group-hover/friend:ring-primary/30 transition-all">
+                      <AvatarImage src={friend.avatar || undefined} />
+                      <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
+                        {getInitials(friend.username)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {friend.isOnline && (
+                      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-background animate-pulse" />
+                    )}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium truncate group-hover/friend:text-primary transition-colors">
+                      {friend.username}
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      {friend.isOnline && (
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
+                      )}
+                      {friend.isOnline ? "Active now" : "Offline"}
+                    </p>
+                  </div>
+                  <MessageCircle className="h-4 w-4 text-muted-foreground group-hover/friend:text-primary transition-colors shrink-0 opacity-0 group-hover/friend:opacity-100" />
+                </Button>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No friends yet</p>
+                <p className="text-xs text-muted-foreground">Find people to connect with</p>
+              </div>
+            )}
+          </div>
         </TabsContent>
 
-        <TabsContent value="suggestions" className="mt-0 h-full">
-          <div className="p-2">
+        <TabsContent value="suggestions" className="mt-0 flex-1 flex flex-col overflow-hidden">
+          <div className="p-2 shrink-0">
             <Input
               placeholder="Search users..."
               value={searchQuery}
@@ -213,7 +211,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
               className="mb-2"
             />
           </div>
-          <ScrollArea className="h-[calc(100%-100px)]">
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
             <div className="p-2 space-y-1">
               {searchLoading || (suggestionsLoading && searchQuery.length < 2) ? (
                 Array.from({ length: 4 }).map((_, i) => (
@@ -304,75 +302,73 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                 </div>
               ) : null}
             </div>
-          </ScrollArea>
+          </div>
         </TabsContent>
 
-        <TabsContent value="requests" className="mt-0 h-full">
-          <ScrollArea className="h-[calc(100%-60px)]">
-            <div className="p-2 space-y-1">
-              {requestsLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1 space-y-1">
-                      <Skeleton className="h-3 w-20" />
-                      <Skeleton className="h-2 w-16" />
-                    </div>
-                    <div className="flex gap-1">
-                      <Skeleton className="h-8 w-8" />
-                      <Skeleton className="h-8 w-8" />
-                    </div>
+        <TabsContent value="requests" className="mt-0 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+          <div className="p-2 space-y-1">
+            {requestsLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-2 w-16" />
                   </div>
-                ))
-              ) : pendingRequests.length > 0 ? (
-                pendingRequests.map((request: FriendRequest) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={request.sender?.avatar || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {getInitials(request.sender?.username || "U")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{request.sender?.username}</p>
-                      <p className="text-xs text-muted-foreground">Wants to be friends</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          handleAcceptRequest(request.id, request.sender?.username || "User")
-                        }
-                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          handleRejectRequest(request.id, request.sender?.username || "User")
-                        }
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
+                  <div className="flex gap-1">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No friend requests</p>
-                  <p className="text-xs text-muted-foreground">New requests will appear here</p>
                 </div>
-              )}
-            </div>
-          </ScrollArea>
+              ))
+            ) : pendingRequests.length > 0 ? (
+              pendingRequests.map((request: FriendRequest) => (
+                <div
+                  key={request.id}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={request.sender?.avatar || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {getInitials(request.sender?.username || "U")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{request.sender?.username}</p>
+                    <p className="text-xs text-muted-foreground">Wants to be friends</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleAcceptRequest(request.id, request.sender?.username || "User")
+                      }
+                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                    >
+                      <Check className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleRejectRequest(request.id, request.sender?.username || "User")
+                      }
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No friend requests</p>
+                <p className="text-xs text-muted-foreground">New requests will appear here</p>
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

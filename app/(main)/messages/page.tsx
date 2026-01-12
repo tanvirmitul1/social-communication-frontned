@@ -19,23 +19,11 @@ import {
 import type { SendMessagePayload } from "@/types";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
 import { resetUnreadCount } from "@/lib/store/slices/conversations.slice";
-import {
-  MessageCircle,
-  Users,
-  Phone,
-  Settings,
-  Moon,
-  Sun,
-  Menu,
-  Search,
-  Plus,
-  UserPlus,
-} from "lucide-react";
+import { MessageCircle, Users, Phone, Settings, Menu, Search, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useTheme } from "next-themes";
 import { getInitials } from "@/lib/utils/format";
 import { ConversationItem } from "@/components/messages/conversation-item";
 import { MessageThread } from "@/components/messages/message-thread";
@@ -55,7 +43,6 @@ export default function MessagesPage() {
   const { conversations } = useAppSelector((state) => state.conversations);
   const { messagesByConversation } = useAppSelector((state) => state.messages);
   const { activeConversationId: activeConversation } = useAppSelector((state) => state.ui);
-  const { theme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"messages" | "groups" | "calls">("messages");
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,10 +78,6 @@ export default function MessagesPage() {
     // Fetch user's chat list on mount
     dispatch(fetchChatList({}));
   }, [dispatch]);
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   const handleConversationClick = (conversationId: string, type: "direct" | "group") => {
     dispatch(setActiveConversation(conversationId));
@@ -179,41 +162,43 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden">
       {/* Sidebar */}
       <div
         className={`${
           sidebarOpen ? "w-80" : "w-0"
-        } flex flex-col border-r border-border bg-card transition-all duration-300 ease-in-out`}
+        } flex flex-col border-r border-border bg-card/80 backdrop-blur-sm glass transition-all duration-300 ease-in-out`}
       >
         {sidebarOpen && (
           <>
             {/* Sidebar Header */}
-            <div className="flex h-16 items-center justify-between border-b border-border px-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                  <MessageCircle className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <h1 className="text-xl font-bold">Messages</h1>
-              </div>
+            <div className="flex h-14 items-center justify-between border-b border-border/50 px-4 bg-linear-to-r from-primary/5 to-primary/10">
+              <h1 className="text-lg font-bold bg-linear-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Messages
+              </h1>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => setFriendsListOpen(true)}>
-                  <div className="relative">
-                    <Users className="h-5 w-5" />
-                  </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-muted/50 transition-colors"
+                  onClick={() => setFriendsListOpen(true)}
+                >
+                  <Users className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setFriendRequestsOpen(true)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-muted/50 transition-colors"
+                  onClick={() => setFriendRequestsOpen(true)}
+                >
                   <div className="relative">
-                    <UserPlus className="h-5 w-5" />
+                    <UserPlus className="h-4 w-4" />
                     {pendingCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                      <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground font-medium">
                         {pendingCount}
                       </span>
                     )}
                   </div>
-                </Button>
-                <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
               </div>
             </div>
@@ -313,9 +298,9 @@ export default function MessagesPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col bg-background">
         {/* Header */}
-        <div className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+        <div className="flex h-14 items-center justify-between border-b border-border/50 glass backdrop-blur-sm px-6">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <Menu className="h-5 w-5" />
@@ -336,7 +321,7 @@ export default function MessagesPage() {
                 </div>
               </>
             ) : (
-              <h2 className="text-lg font-semibold">Welcome to Social Communication</h2>
+              <h2 className="text-lg font-semibold">Welcome</h2>
             )}
           </div>
           {activeConv && activeConv.type === "group" && (

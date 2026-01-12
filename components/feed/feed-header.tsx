@@ -69,9 +69,6 @@ export function FeedHeader() {
           <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Social Feed
-          </h1>
         </div>
 
         {/* Navigation & User Menu */}
@@ -87,11 +84,7 @@ export function FeedHeader() {
             <span className="hidden sm:inline ml-2">Messages</span>
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="relative"
-          >
+          <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Notifications</span>
             {notificationCount > 0 && (
@@ -118,9 +111,7 @@ export function FeedHeader() {
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
                     <p className="font-medium">{user.username}</p>
-                    <p className="w-[200px] truncate text-sm text-muted-foreground">
-                      {user.email}
-                    </p>
+                    <p className="w-[200px] truncate text-sm text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />

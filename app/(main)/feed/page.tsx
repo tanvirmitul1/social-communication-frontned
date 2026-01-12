@@ -9,7 +9,6 @@ import { useGetFeedQuery } from "@/lib/api/feed-api.slice";
 import { CreatePostCard } from "@/components/feed/create-post-card";
 import { PostCard } from "@/components/feed/post-card";
 import { FeedSkeleton } from "@/components/feed/feed-skeleton";
-import { FeedHeader } from "@/components/feed/feed-header";
 import { FriendsSidebar } from "@/components/feed/friends-sidebar";
 import { MessagePopup } from "@/components/feed/message-popup";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,53 +47,59 @@ export default function FeedPage() {
     }
   }, [inView, data, isFetching]);
 
+  // Reset cursor when feed type changes
+  useEffect(() => {
+    setCursor(undefined);
+  }, [feedType]);
+
+  const handleOpenChat = useCallback(
+    (userId: string, username: string, avatar?: string | null) => {
+      // Check if chat already open
+      if (chatWindows.some((chat) => chat.userId === userId)) {
+        return;
+      }
+
+      // Max 3 chat windows
+      if (chatWindows.length >= 3) {
+        toast.error("Maximum 3 chat windows allowed");
+        return;
+      }
+
+      setChatWindows([...chatWindows, { userId, username, avatar }]);
+    },
+    [chatWindows]
+  );
+
   // WebSocket message handling
   useEffect(() => {
     const handleNewMessage = (message: any) => {
       // Add message to Redux store
       const conversationId = message.groupId || message.senderId;
       dispatch(addMessage({ conversationId, message }));
-      
+
       // Auto-open chat if not already open and message is from another user
       if (message.senderId !== user?.id) {
-        const isAlreadyOpen = chatWindows.some(chat => chat.userId === message.senderId);
+        const isAlreadyOpen = chatWindows.some((chat) => chat.userId === message.senderId);
         if (!isAlreadyOpen && chatWindows.length < 3) {
           // Find sender info (you might need to fetch this from API)
-          handleOpenChat(message.senderId, message.senderUsername || 'User', message.senderAvatar);
+          handleOpenChat(message.senderId, message.senderUsername || "User", message.senderAvatar);
         }
       }
     };
 
     socketManager.onMessageReceived(handleNewMessage);
-    
+
     return () => {
-      socketManager.removeAllListeners('message:received');
+      socketManager.removeAllListeners("message:received");
     };
-  }, [dispatch, user?.id, chatWindows]);
+  }, [dispatch, user?.id, chatWindows, handleOpenChat]);
 
-  // Reset cursor when feed type changes
-  useEffect(() => {
-    setCursor(undefined);
-  }, [feedType]);
-
-  const handleOpenChat = useCallback((userId: string, username: string, avatar?: string | null) => {
-    // Check if chat already open
-    if (chatWindows.some((chat) => chat.userId === userId)) {
-      return;
-    }
-
-    // Max 3 chat windows
-    if (chatWindows.length >= 3) {
-      toast.error("Maximum 3 chat windows allowed");
-      return;
-    }
-
-    setChatWindows([...chatWindows, { userId, username, avatar }]);
-  }, [chatWindows]);
-
-  const handleCloseChat = useCallback((userId: string) => {
-    setChatWindows(chatWindows.filter((chat) => chat.userId !== userId));
-  }, [chatWindows]);
+  const handleCloseChat = useCallback(
+    (userId: string) => {
+      setChatWindows(chatWindows.filter((chat) => chat.userId !== userId));
+    },
+    [chatWindows]
+  );
 
   const handleRefresh = () => {
     setCursor(undefined);
@@ -102,21 +107,12 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header */}
-      <FeedHeader />
-      
+    <div className="h-[calc(100vh-64px)] bg-gradient-to-br from-background via-background to-muted/20 overflow-hidden">
       {/* Main Layout */}
-      <div className="flex">
+      <div className="flex max-w-full h-full">
         {/* Left Sidebar - Navigation */}
-        <aside className="w-64 border-r bg-card/80 backdrop-blur-sm h-[calc(100vh-64px)] sticky top-16 hidden lg:block">
+        <aside className="w-64 shrink-0 border-r bg-card/80 backdrop-blur-sm h-full hidden lg:block overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
           <div className="p-4">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Feed</h2>
-            </div>
             <nav className="space-y-2">
               <Button
                 variant={feedType === "following" ? "secondary" : "ghost"}
@@ -154,20 +150,29 @@ export default function FeedPage() {
         </aside>
 
         {/* Center Feed */}
-        <main className="flex-1 max-w-2xl mx-auto">
+        <main className="flex-1 min-w-0 max-w-2xl mx-auto h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b border-border/50 lg:hidden">
             <div className="p-4">
               <Tabs value={feedType} onValueChange={(v) => setFeedType(v as FeedType)}>
                 <TabsList className="w-full bg-muted/50 backdrop-blur-sm">
-                  <TabsTrigger value="following" className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white">
+                  <TabsTrigger
+                    value="following"
+                    className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white"
+                  >
                     <Home className="h-4 w-4 mr-2" />
                     Following
                   </TabsTrigger>
-                  <TabsTrigger value="discover" className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                  <TabsTrigger
+                    value="discover"
+                    className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
+                  >
                     <Compass className="h-4 w-4 mr-2" />
                     Discover
                   </TabsTrigger>
-                  <TabsTrigger value="trending" className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white">
+                  <TabsTrigger
+                    value="trending"
+                    className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white"
+                  >
                     <TrendingUp className="h-4 w-4 mr-2" />
                     Trending
                   </TabsTrigger>
@@ -194,9 +199,9 @@ export default function FeedPage() {
                   {feedType} Feed
                 </h3>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleRefresh}
                 className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50 transition-all duration-200"
               >
@@ -209,7 +214,7 @@ export default function FeedPage() {
             {isLoading && !data ? (
               <FeedSkeleton />
             ) : error ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50"
@@ -218,7 +223,11 @@ export default function FeedPage() {
                   <RefreshCw className="h-6 w-6 text-red-500" />
                 </div>
                 <p className="text-muted-foreground mb-4">Failed to load feed</p>
-                <Button onClick={handleRefresh} variant="outline" className="hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50">
+                <Button
+                  onClick={handleRefresh}
+                  variant="outline"
+                  className="hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50"
+                >
                   Retry
                 </Button>
               </motion.div>
@@ -249,14 +258,12 @@ export default function FeedPage() {
                     className="text-center py-8"
                   >
                     <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground">
-                      You've reached the end! ✨
-                    </p>
+                    <p className="text-sm text-muted-foreground">You have reached the end</p>
                   </motion.div>
                 )}
               </>
             ) : (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50"
