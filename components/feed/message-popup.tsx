@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Minus, Send } from "lucide-react";
+import { X, Minus, Send, MessageCircle } from "lucide-react";
 import { getInitials } from "@/lib/utils/format";
 import { socketManager } from "@/lib/socket/socket-manager";
 import { playMessageSound } from "@/lib/utils/sound";
@@ -89,40 +89,50 @@ export function MessagePopup({ userId, username, avatar, onClose, index }: Messa
 
   return (
     <motion.div
-      initial={{ y: 500, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 500, opacity: 0 }}
+      initial={{ y: 500, opacity: 0, scale: 0.9 }}
+      animate={{ y: 0, opacity: 1, scale: 1 }}
+      exit={{ y: 500, opacity: 0, scale: 0.9 }}
       transition={{ type: "spring", damping: 25, stiffness: 300 }}
       className="fixed bottom-0 z-50"
       style={{ right: `${rightOffset}px` }}
     >
-      <Card className="w-80 shadow-2xl overflow-hidden flex flex-col bg-card/95 backdrop-blur-sm border border-border/50">
+      <Card className="w-80 shadow-2xl overflow-hidden flex flex-col glass border-border/50">
         {/* Header */}
-        <div className="p-3 border-b flex items-center justify-between bg-muted/50">
+        <div className="p-3 border-b border-border/50 flex items-center justify-between bg-linear-to-r from-primary/5 to-primary/10">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={avatar || undefined} />
-              <AvatarFallback>{getInitials(username)}</AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                <AvatarImage src={avatar || undefined} />
+                <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary text-xs font-medium">
+                  {getInitials(username)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-card animate-pulse" />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{username}</p>
-              <p className="text-xs text-muted-foreground">Active now</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                Active now
+              </p>
             </div>
           </div>
           <div className="flex gap-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0"
+              className="h-7 w-7 p-0 hover:bg-muted/50 transition-colors"
               onClick={() => setIsMinimized(!isMinimized)}
+              aria-label={isMinimized ? "Expand chat" : "Minimize chat"}
             >
               <Minus className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0"
+              className="h-7 w-7 p-0 hover:bg-muted/50 hover:text-destructive transition-colors"
               onClick={onClose}
+              aria-label="Close chat"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -132,27 +142,34 @@ export function MessagePopup({ userId, username, avatar, onClose, index }: Messa
         <AnimatePresence>
           {!isMinimized && (
             <motion.div
-              initial={{ height: 0 }}
-              animate={{ height: 400 }}
-              exit={{ height: 0 }}
-              transition={{ duration: 0.2 }}
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 400, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="overflow-hidden"
             >
               {/* Messages */}
-              <ScrollArea className="h-[340px] p-3" ref={scrollAreaRef}>
+              <ScrollArea className="h-[340px] p-3 bg-muted/10" ref={scrollAreaRef}>
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-sm text-muted-foreground text-center">
-                      No messages yet.
-                      <br />
-                      Start a conversation!
-                    </p>
+                    <div className="text-center">
+                      <MessageCircle className="h-12 w-12 text-muted-foreground/50 mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        No messages yet.
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">
+                        Start a conversation!
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {messages.map((message) => (
-                      <div
+                      <motion.div
                         key={message.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
                         className={`flex ${
                           message.senderId === user?.id
                             ? "justify-end"
@@ -160,22 +177,22 @@ export function MessagePopup({ userId, username, avatar, onClose, index }: Messa
                         }`}
                       >
                         <div
-                          className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
+                          className={`max-w-[70%] rounded-2xl px-3.5 py-2 text-sm shadow-sm ${
                             message.senderId === user?.id
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
+                              ? "bg-linear-to-r from-primary to-primary/90 text-primary-foreground rounded-br-sm"
+                              : "bg-card border border-border/50 text-foreground rounded-bl-sm"
                           }`}
                         >
-                          {message.content}
+                          <p className="leading-relaxed">{message.content}</p>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
               </ScrollArea>
 
               {/* Input */}
-              <div className="p-3 border-t">
+              <div className="p-3 border-t border-border/50 bg-card/50">
                 <div className="flex gap-2">
                   <Input
                     placeholder="Type a message..."
@@ -187,13 +204,16 @@ export function MessagePopup({ userId, username, avatar, onClose, index }: Messa
                         handleSend();
                       }
                     }}
-                    className="flex-1"
+                    className="flex-1 bg-background/80 border-border/50 focus-visible:ring-primary/50"
                     disabled={isSending}
+                    aria-label="Type your message"
                   />
                   <Button
                     size="sm"
                     onClick={handleSend}
                     disabled={!messageText.trim() || isSending}
+                    className="bg-primary hover:bg-primary/90 shadow-sm transition-all"
+                    aria-label="Send message"
                   >
                     <Send className="h-4 w-4" />
                   </Button>

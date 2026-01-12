@@ -113,11 +113,16 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   };
 
   return (
-    <div className="w-80 border-l bg-card/50 backdrop-blur-sm h-[calc(100vh-64px)] sticky top-16 hidden xl:block">
-      <div className="p-4 border-b bg-background/80">
+    <div className="w-80 border-l border-border/50 glass h-[calc(100vh-64px)] sticky top-16 hidden xl:block">
+      <div className="p-5 border-b border-border/50 bg-linear-to-b from-primary/5 to-transparent">
         <h3 className="font-semibold text-lg">Friends</h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          {onlineFriends.length} online • {allFriends.length} total
+        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            {onlineFriends.length} online
+          </span>
+          <span className="text-border">•</span>
+          <span>{allFriends.length} total</span>
         </p>
       </div>
 
@@ -160,27 +165,32 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   <Button
                     key={friend.id}
                     variant="ghost"
-                    className="w-full justify-start gap-3 h-auto p-2 hover:bg-muted/50 rounded-lg"
+                    className="w-full justify-start gap-3 h-auto p-2.5 hover:bg-muted/50 rounded-xl transition-all duration-200 group/friend"
                     onClick={() => onOpenChat(friend.id, friend.username, friend.avatar)}
                   >
                     <div className="relative">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-10 w-10 ring-2 ring-border/30 group-hover/friend:ring-primary/30 transition-all">
                         <AvatarImage src={friend.avatar || undefined} />
-                        <AvatarFallback className="text-xs">
+                        <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
                           {getInitials(friend.username)}
                         </AvatarFallback>
                       </Avatar>
                       {friend.isOnline && (
-                        <Badge className="absolute -bottom-0.5 -right-0.5 h-3 w-3 p-0 bg-green-500 border-2 border-background" />
+                        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-background animate-pulse" />
                       )}
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                      <p className="text-sm font-medium truncate">{friend.username}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-medium truncate group-hover/friend:text-primary transition-colors">
+                        {friend.username}
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        {friend.isOnline && (
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
+                        )}
                         {friend.isOnline ? "Active now" : "Offline"}
                       </p>
                     </div>
-                    <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <MessageCircle className="h-4 w-4 text-muted-foreground group-hover/friend:text-primary transition-colors shrink-0 opacity-0 group-hover/friend:opacity-100" />
                   </Button>
                 ))
               ) : (
@@ -223,11 +233,11 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                     .map((user: User) => (
                       <div
                         key={user.id}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
+                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/30 transition-colors group/user"
                       >
-                        <Avatar className="h-10 w-10">
+                        <Avatar className="h-10 w-10 ring-2 ring-border/30">
                           <AvatarImage src={user.avatar || undefined} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
                             {getInitials(user.username)}
                           </AvatarFallback>
                         </Avatar>
@@ -239,7 +249,8 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                           size="sm"
                           variant="outline"
                           onClick={() => handleSendRequest(user.id, user.username)}
-                          className="h-8 px-2"
+                          className="h-8 px-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                          aria-label={`Send friend request to ${user.username}`}
                         >
                           <UserPlus className="h-3 w-3" />
                         </Button>

@@ -85,51 +85,66 @@ export function PostCard({ post }: PostCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden group hover-lift backdrop-blur-sm bg-card/80 border-border/50 shadow-sm hover:shadow-md transition-all duration-300">
       {/* Post Header */}
-      <div className="p-4">
+      <div className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex gap-3">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-10 w-10 ring-2 ring-border/50 ring-offset-2 ring-offset-background">
               <AvatarImage src={post.author.avatar || undefined} />
-              <AvatarFallback>{getInitials(post.author.username)}</AvatarFallback>
+              <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
+                {getInitials(post.author.username)}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <h4 className="font-semibold text-sm">{post.author.username}</h4>
-              <p className="text-xs text-muted-foreground">
+              <h4 className="font-semibold text-sm text-foreground">{post.author.username}</h4>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
                 {formatRelativeTime(post.createdAt)}
-                {post.editedAt && " · Edited"}
+                {post.editedAt && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span className="text-muted-foreground/70">Edited</span>
+                  </>
+                )}
               </p>
             </div>
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-muted"
+                aria-label="Post options"
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="glass">
               {isOwnPost ? (
                 <>
-                  <DropdownMenuItem>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit post
+                  <DropdownMenuItem className="gap-2 cursor-pointer">
+                    <Edit className="h-4 w-4" />
+                    <span>Edit post</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete post
+                  <DropdownMenuItem
+                    onClick={handleDelete}
+                    className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete post</span>
                   </DropdownMenuItem>
                 </>
               ) : (
                 <>
-                  <DropdownMenuItem onClick={handleSave}>
-                    <Bookmark className="h-4 w-4 mr-2" />
-                    {post.isSaved ? "Unsave post" : "Save post"}
+                  <DropdownMenuItem onClick={handleSave} className="gap-2 cursor-pointer">
+                    <Bookmark className={`h-4 w-4 ${post.isSaved ? 'fill-current' : ''}`} />
+                    <span>{post.isSaved ? "Unsave post" : "Save post"}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Flag className="h-4 w-4 mr-2" />
-                    Report post
+                  <DropdownMenuItem className="gap-2 cursor-pointer">
+                    <Flag className="h-4 w-4" />
+                    <span>Report post</span>
                   </DropdownMenuItem>
                 </>
               )}
@@ -138,18 +153,20 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* Post Content */}
-        <div className="mt-3">
-          <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+        <div className="mt-4">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+            {post.content}
+          </p>
         </div>
 
         {/* Post Media */}
         {post.media && post.media.length > 0 && (
-          <div className="mt-3 -mx-4">
-            <div className="grid grid-cols-2 gap-1">
+          <div className="mt-4 -mx-5">
+            <div className="grid grid-cols-2 gap-0.5">
               {post.media.slice(0, 4).map((media, index) => (
                 <div
                   key={media.id || index}
-                  className={`relative ${
+                  className={`relative group/media overflow-hidden ${
                     post.media.length === 1 ? 'col-span-2' : ''
                   } ${
                     post.media.length === 3 && index === 0 ? 'col-span-2' : ''
@@ -158,10 +175,10 @@ export function PostCard({ post }: PostCardProps) {
                   <img
                     src={media.url}
                     alt=""
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-cover transition-transform duration-300 group-hover/media:scale-105"
                   />
                   {index === 3 && post.media.length > 4 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
                       <span className="text-white text-2xl font-bold">
                         +{post.media.length - 4}
                       </span>
@@ -175,42 +192,55 @@ export function PostCard({ post }: PostCardProps) {
 
         {/* Reaction Count */}
         {post.likesCount > 0 && (
-          <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-            <span>{formatCount(post.likesCount)} reactions</span>
+          <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+            <button className="hover:underline hover:text-foreground transition-colors">
+              {formatCount(post.likesCount)} {post.likesCount === 1 ? 'reaction' : 'reactions'}
+            </button>
             <div className="flex gap-3">
               {post.commentsCount > 0 && (
-                <span>{formatCount(post.commentsCount)} comments</span>
+                <button className="hover:underline hover:text-foreground transition-colors">
+                  {formatCount(post.commentsCount)} {post.commentsCount === 1 ? 'comment' : 'comments'}
+                </button>
               )}
               {post.sharesCount > 0 && (
-                <span>{formatCount(post.sharesCount)} shares</span>
+                <button className="hover:underline hover:text-foreground transition-colors">
+                  {formatCount(post.sharesCount)} {post.sharesCount === 1 ? 'share' : 'shares'}
+                </button>
               )}
             </div>
           </div>
         )}
       </div>
 
-      <Separator />
+      <Separator className="opacity-50" />
 
       {/* Action Buttons */}
-      <div className="px-2 py-1 flex items-center justify-around">
+      <div className="px-2 py-1.5 flex items-center justify-around bg-muted/30">
         <ReactionPicker
           currentReaction={post.userReaction}
           onReact={handleReact}
           onUnreact={handleUnreact}
         />
-        
+
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setShowComments(!showComments)}
+          className="gap-2 hover:bg-muted transition-colors"
+          aria-label="Comment on post"
         >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          Comment
+          <MessageCircle className="h-4 w-4" />
+          <span className="text-sm">Comment</span>
         </Button>
 
-        <Button variant="ghost" size="sm">
-          <Share2 className="h-4 w-4 mr-2" />
-          Share
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2 hover:bg-muted transition-colors"
+          aria-label="Share post"
+        >
+          <Share2 className="h-4 w-4" />
+          <span className="text-sm">Share</span>
         </Button>
       </div>
 
