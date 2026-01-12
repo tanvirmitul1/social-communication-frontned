@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useAppSelector } from "@/lib/store";
 import {
-  useReactToPostMutation,
-  useUnreactToPostMutation,
   useSavePostMutation,
   useUnsavePostMutation,
   useDeletePostMutation,
 } from "@/lib/api/feed-api.slice";
+import { usePostReactions } from "@/hooks/use-post-reactions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ReactionPicker } from "./reaction-picker";
+import { ReactionAnimation } from "./reaction-animation";
 import { CommentSection } from "./comment-section";
 import { MessageCircle, Share2, Bookmark, MoreHorizontal, Edit, Trash2, Flag } from "lucide-react";
 import { getInitials } from "@/lib/utils/format";
@@ -35,29 +35,16 @@ export function PostCard({ post }: PostCardProps) {
   const currentUser = useAppSelector((state) => state.auth.user);
   const [showComments, setShowComments] = useState(false);
   
-  const [reactToPost] = useReactToPostMutation();
-  const [unreactToPost] = useUnreactToPostMutation();
+  const { handleReact, handleUnreact, reactionTrigger } = usePostReactions({
+    postId: post.id,
+    currentReaction: post.userReaction
+  });
+  
   const [savePost] = useSavePostMutation();
   const [unsavePost] = useUnsavePostMutation();
   const [deletePost] = useDeletePostMutation();
 
   const isOwnPost = currentUser?.id === post.authorId;
-
-  const handleReact = async (type: ReactionType) => {
-    try {
-      await reactToPost({ id: post.id, data: { type } }).unwrap();
-    } catch (error) {
-      toast.error("Failed to react to post");
-    }
-  };
-
-  const handleUnreact = async () => {
-    try {
-      await unreactToPost(post.id).unwrap();
-    } catch (error) {
-      toast.error("Failed to remove reaction");
-    }
-  };
 
   const handleSave = async () => {
     try {
@@ -215,7 +202,12 @@ export function PostCard({ post }: PostCardProps) {
       <Separator className="opacity-50" />
 
       {/* Action Buttons */}
-      <div className="px-2 py-1.5 flex items-center justify-around bg-muted/30">
+      <div className="px-2 py-1.5 flex items-center justify-around bg-muted/30 relative">
+        <ReactionAnimation 
+          reaction={post.userReaction} 
+          trigger={reactionTrigger} 
+        />
+        
         <ReactionPicker
           currentReaction={post.userReaction}
           onReact={handleReact}

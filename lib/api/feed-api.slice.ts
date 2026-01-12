@@ -119,17 +119,81 @@ export const feedApiSlice = baseApiSlice.injectEndpoints({
         body: data,
       }),
       async onQueryStarted({ id, data }, { dispatch, queryFulfilled }) {
-        // Optimistic update
+        // Optimistic updates for individual post
+        const patchResult = dispatch(
+          feedApiSlice.util.updateQueryData('getPost', id, (draft) => {
+            const oldReaction = draft.userReaction;
+            draft.userReaction = data.type;
+            // Adjust count based on previous reaction
+            if (!oldReaction) {
+              draft.likesCount += 1;
+            }
+          })
+        );
+
+        // Optimistic updates for feed cache
+        const feedPatches: any[] = [];
+        ['following', 'discover', 'trending'].forEach(feedType => {
+          const feedPatch = dispatch(
+            feedApiSlice.util.updateQueryData('getFeed', { type: feedType as any }, (draft) => {
+              const post = draft.posts.find(p => p.id === id);
+              if (post) {
+                const oldReaction = post.userReaction;
+                post.userReaction = data.type;
+                if (!oldReaction) {
+                  post.likesCount += 1;
+                }
+              }
+            })
+          );
+          feedPatches.push(feedPatch);
+        });
+
+        try {
+          await queryFulfilled;
+        } catch {
+          // Revert all optimistic updates on failure
+          patchResult.undo();
+          feedPatches.forEach(patch => patch.undo());
+        }
+      },
+      invalidatesTags: (result, error, { id }) => [{ type: 'Post', id }],
+    }),
+
+    // Update reaction on post
+    updateReaction: builder.mutation<void, { id: string; data: ReactPayload }>({
+      query: ({ id, data }) => ({
+        url: `/posts/${id}/react`,
+        method: 'PUT',
+        body: data,
+      }),
+      async onQueryStarted({ id, data }, { dispatch, queryFulfilled }) {
+        // Optimistic updates for individual post
         const patchResult = dispatch(
           feedApiSlice.util.updateQueryData('getPost', id, (draft) => {
             draft.userReaction = data.type;
-            draft.likesCount += 1;
           })
         );
+
+        // Optimistic updates for feed cache
+        const feedPatches: any[] = [];
+        ['following', 'discover', 'trending'].forEach(feedType => {
+          const feedPatch = dispatch(
+            feedApiSlice.util.updateQueryData('getFeed', { type: feedType as any }, (draft) => {
+              const post = draft.posts.find(p => p.id === id);
+              if (post) {
+                post.userReaction = data.type;
+              }
+            })
+          );
+          feedPatches.push(feedPatch);
+        });
+
         try {
           await queryFulfilled;
         } catch {
           patchResult.undo();
+          feedPatches.forEach(patch => patch.undo());
         }
       },
       invalidatesTags: (result, error, { id }) => [{ type: 'Post', id }],
@@ -142,17 +206,35 @@ export const feedApiSlice = baseApiSlice.injectEndpoints({
         method: 'DELETE',
       }),
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
-        // Optimistic update
+        // Optimistic updates for individual post
         const patchResult = dispatch(
           feedApiSlice.util.updateQueryData('getPost', id, (draft) => {
             draft.userReaction = null;
             draft.likesCount = Math.max(0, draft.likesCount - 1);
           })
         );
+
+        // Optimistic updates for feed cache
+        const feedPatches: any[] = [];
+        ['following', 'discover', 'trending'].forEach(feedType => {
+          const feedPatch = dispatch(
+            feedApiSlice.util.updateQueryData('getFeed', { type: feedType as any }, (draft) => {
+              const post = draft.posts.find(p => p.id === id);
+              if (post) {
+                post.userReaction = null;
+                post.likesCount = Math.max(0, post.likesCount - 1);
+              }
+            })
+          );
+          feedPatches.push(feedPatch);
+        });
+
         try {
           await queryFulfilled;
         } catch {
+          // Revert all optimistic updates on failure
           patchResult.undo();
+          feedPatches.forEach(patch => patch.undo());
         }
       },
       invalidatesTags: (result, error, id) => [{ type: 'Post', id }],
@@ -342,6 +424,7 @@ export const {
   useUpdatePostMutation,
   useDeletePostMutation,
   useReactToPostMutation,
+  useUpdateReactionMutation,
   useUnreactToPostMutation,
   useGetPostReactionsQuery,
   useGetPostCommentsQuery,

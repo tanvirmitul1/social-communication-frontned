@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ThumbsUp, Heart, Laugh, Frown, Angry } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ThumbsUp, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReactionType } from "@/types/feed.types";
 
@@ -11,6 +11,7 @@ interface ReactionOption {
   icon: React.ReactNode;
   label: string;
   color: string;
+  hoverColor: string;
 }
 
 const REACTIONS: ReactionOption[] = [
@@ -18,37 +19,43 @@ const REACTIONS: ReactionOption[] = [
     type: "LIKE", 
     icon: <ThumbsUp className="h-5 w-5" />, 
     label: "Like",
-    color: "text-blue-600" 
+    color: "text-blue-600",
+    hoverColor: "hover:bg-blue-50 dark:hover:bg-blue-950/20"
   },
   { 
     type: "LOVE", 
     icon: <Heart className="h-5 w-5 fill-red-500 text-red-500" />, 
     label: "Love",
-    color: "text-red-500" 
+    color: "text-red-500",
+    hoverColor: "hover:bg-red-50 dark:hover:bg-red-950/20"
   },
   { 
     type: "HAHA", 
-    icon: <img src="/icons/emoji-laugh.svg" alt="Haha" className="h-5 w-5" />, 
+    icon: <span className="text-xl">😂</span>, 
     label: "Haha",
-    color: "text-yellow-500" 
+    color: "text-yellow-500",
+    hoverColor: "hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
   },
   { 
     type: "WOW", 
-    icon: <img src="/icons/emoji-wow.svg" alt="Wow" className="h-5 w-5" />, 
+    icon: <span className="text-xl">😮</span>, 
     label: "Wow",
-    color: "text-yellow-600" 
+    color: "text-yellow-600",
+    hoverColor: "hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
   },
   { 
     type: "SAD", 
-    icon: <img src="/icons/emoji-sad.svg" alt="Sad" className="h-5 w-5" />, 
+    icon: <span className="text-xl">😢</span>, 
     label: "Sad",
-    color: "text-yellow-700" 
+    color: "text-blue-400",
+    hoverColor: "hover:bg-blue-50 dark:hover:bg-blue-950/20"
   },
   { 
     type: "ANGRY", 
-    icon: <img src="/icons/emoji-angry.svg" alt="Angry" className="h-5 w-5" />, 
+    icon: <span className="text-xl">😡</span>, 
     label: "Angry",
-    color: "text-orange-600" 
+    color: "text-orange-600",
+    hoverColor: "hover:bg-orange-50 dark:hover:bg-orange-950/20"
   },
 ];
 
@@ -59,58 +66,142 @@ interface ReactionPickerProps {
 }
 
 export function ReactionPicker({ currentReaction, onReact, onUnreact }: ReactionPickerProps) {
+  const [showReactions, setShowReactions] = useState(false);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [pressTimeout, setPressTimeout] = useState<NodeJS.Timeout | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
   const handleReactionClick = (type: ReactionType) => {
     if (currentReaction === type) {
       onUnreact();
     } else {
       onReact(type);
     }
+    setShowReactions(false);
+  };
+
+  const handleMouseEnter = () => {
+    if (hoverTimeout) clearTimeout(hoverTimeout);
+    if (window.innerWidth >= 768) { // Only on desktop
+      setShowReactions(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (window.innerWidth >= 768) {
+      const timeout = setTimeout(() => setShowReactions(false), 300);
+      setHoverTimeout(timeout);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    const timeout = setTimeout(() => {
+      setShowReactions(true);
+    }, 500); // 500ms long press
+    setPressTimeout(timeout);
+  };
+
+  const handleTouchEnd = () => {
+    if (pressTimeout) {
+      clearTimeout(pressTimeout);
+      setPressTimeout(null);
+    }
+    if (!showReactions) {
+      // Quick tap - toggle like or remove current reaction
+      if (currentReaction) {
+        onUnreact();
+      } else {
+        onReact("LIKE");
+      }
+    }
+  };
+
+  const handleQuickLike = () => {
+    if (currentReaction === "LIKE") {
+      onUnreact();
+    } else {
+      onReact("LIKE");
+    }
   };
 
   const currentReactionOption = REACTIONS.find(r => r.type === currentReaction);
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={currentReaction ? currentReactionOption?.color : ""}
+    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <Button
+        ref={buttonRef}
+        variant="ghost"
+        size="sm"
+        onClick={handleQuickLike}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className={`gap-2 hover:bg-muted transition-all duration-200 ${
+          currentReaction ? currentReactionOption?.color : "hover:text-blue-600"
+        }`}
+        aria-label="React to post"
+      >
+        <motion.div
+          animate={currentReaction ? { scale: [1, 1.2, 1] } : {}}
+          transition={{ duration: 0.3 }}
         >
           {currentReaction ? (
-            <>
-              {currentReactionOption?.icon}
-              <span className="ml-2">{currentReactionOption?.label}</span>
-            </>
+            currentReactionOption?.icon
           ) : (
-            <>
-              <ThumbsUp className="h-4 w-4 mr-2" />
-              Like
-            </>
+            <ThumbsUp className="h-4 w-4" />
           )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="start">
-        <div className="flex gap-2">
-          {REACTIONS.map((reaction, index) => (
-            <motion.button
-              key={reaction.type}
-              onClick={() => handleReactionClick(reaction.type)}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: index * 0.05, type: "spring", stiffness: 500, damping: 25 }}
-              whileHover={{ scale: 1.3 }}
-              whileTap={{ scale: 0.9 }}
-              className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                currentReaction === reaction.type ? 'bg-gray-100 dark:bg-gray-800' : ''
-              }`}
-              title={reaction.label}
+        </motion.div>
+        <span className="text-sm">
+          {currentReaction ? currentReactionOption?.label : "Like"}
+        </span>
+      </Button>
+
+      <AnimatePresence>
+        {showReactions && (
+          <>
+            {/* Mobile backdrop */}
+            <div 
+              className="fixed inset-0 z-40 md:hidden" 
+              onClick={() => setShowReactions(false)}
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 10 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="absolute bottom-full left-0 mb-2 z-50"
             >
-              {reaction.icon}
-            </motion.button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+              <div className="flex gap-1 p-2 bg-background/95 backdrop-blur-sm border border-border/50 rounded-full shadow-lg">
+                {REACTIONS.map((reaction, index) => (
+                  <motion.button
+                    key={reaction.type}
+                    onClick={() => handleReactionClick(reaction.type)}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ 
+                      delay: index * 0.05, 
+                      type: "spring", 
+                      stiffness: 500, 
+                      damping: 25 
+                    }}
+                    whileHover={{ scale: 1.3, y: -4 }}
+                    whileTap={{ scale: 0.9 }}
+                    className={`p-2 rounded-full transition-all duration-200 ${
+                      reaction.hoverColor
+                    } ${
+                      currentReaction === reaction.type ? 'bg-muted scale-110' : ''
+                    }`}
+                    title={reaction.label}
+                  >
+                    {reaction.icon}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
