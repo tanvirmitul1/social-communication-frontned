@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { useGetFriendsQuery } from "@/lib/api/friends-api.slice";
-import { useGetPendingFriendRequestsQuery, useSendFriendRequestMutation, useAcceptFriendRequestMutation, useRejectFriendRequestMutation } from "@/lib/api/friend-request-api.slice";
+import {
+  useGetPendingFriendRequestsQuery,
+  useSendFriendRequestMutation,
+  useAcceptFriendRequestMutation,
+  useRejectFriendRequestMutation,
+} from "@/lib/api/friend-request-api.slice";
 import { useSearchUsersQuery, useGetSuggestedUsersQuery } from "@/lib/api/user-api.slice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +31,8 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   const [activeTab, setActiveTab] = useState("friends");
 
   const { data: friends, isLoading: friendsLoading } = useGetFriendsQuery();
-  const { data: friendRequests, isLoading: requestsLoading } = useGetPendingFriendRequestsQuery(undefined);
+  const { data: friendRequests, isLoading: requestsLoading } =
+    useGetPendingFriendRequestsQuery(undefined);
   const pendingRequests = friendRequests?.data || [];
   const { data: searchResults, isLoading: searchLoading } = useSearchUsersQuery(
     { query: searchQuery, limit: 10 },
@@ -41,15 +47,16 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   const [acceptRequest] = useAcceptFriendRequestMutation();
   const [rejectRequest] = useRejectFriendRequestMutation();
 
-  const onlineFriends = Array.isArray(friends) ? friends.filter((friend: User) => friend.isOnline) : [];
+  const onlineFriends = Array.isArray(friends)
+    ? friends.filter((friend: User) => friend.isOnline)
+    : [];
   const allFriends = Array.isArray(friends) ? friends : [];
-
 
   const handleSendRequest = async (userId: string, username: string) => {
     try {
       await sendFriendRequest({ receiverId: userId }).unwrap();
       toast.success(`Friend request sent to ${username}`);
-      setSentRequests(prev => new Set([...prev, userId]));
+      setSentRequests((prev) => new Set([...prev, userId]));
     } catch (err: unknown) {
       let errorMessage = "Failed to send friend request";
       if (typeof err === "string") {
@@ -62,7 +69,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
       }
       if (errorMessage.includes("already sent") || errorMessage.includes("pending")) {
         toast.error(`Friend request already sent to ${username}`);
-        setSentRequests(prev => new Set([...prev, userId]));
+        setSentRequests((prev) => new Set([...prev, userId]));
       } else {
         toast.error(errorMessage);
       }
@@ -159,7 +166,9 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                     <div className="relative">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={friend.avatar || undefined} />
-                        <AvatarFallback className="text-xs">{getInitials(friend.username)}</AvatarFallback>
+                        <AvatarFallback className="text-xs">
+                          {getInitials(friend.username)}
+                        </AvatarFallback>
                       </Avatar>
                       {friend.isOnline && (
                         <Badge className="absolute -bottom-0.5 -right-0.5 h-3 w-3 p-0 bg-green-500 border-2 border-background" />
@@ -212,25 +221,30 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                   searchResults.data
                     .filter((user: User) => !sentRequests.has(user.id))
                     .map((user: User) => (
-                    <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar || undefined} />
-                        <AvatarFallback className="text-xs">{getInitials(user.username)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{user.username}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSendRequest(user.id, user.username)}
-                        className="h-8 px-2"
+                      <div
+                        key={user.id}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
                       >
-                        <UserPlus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.avatar || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {getInitials(user.username)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{user.username}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSendRequest(user.id, user.username)}
+                          className="h-8 px-2"
+                        >
+                          <UserPlus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-sm text-muted-foreground">No users found</p>
@@ -239,29 +253,37 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
               ) : suggestions && suggestions.length > 0 ? (
                 <>
                   <div className="px-2 py-1 mb-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Suggested for you</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Suggested for you
+                    </p>
                   </div>
-                  {suggestions?.filter((user: User) => !sentRequests.has(user.id))
+                  {suggestions
+                    ?.filter((user: User) => !sentRequests.has(user.id))
                     .map((user: User) => (
-                    <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar || undefined} />
-                        <AvatarFallback className="text-xs">{getInitials(user.username)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{user.username}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSendRequest(user.id, user.username)}
-                        className="h-8 px-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50"
+                      <div
+                        key={user.id}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
                       >
-                        <UserPlus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.avatar || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {getInitials(user.username)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{user.username}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSendRequest(user.id, user.username)}
+                          className="h-8 px-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50"
+                        >
+                          <UserPlus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
                 </>
               ) : searchQuery.length < 2 ? (
                 <div className="text-center py-8">
@@ -293,7 +315,10 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                 ))
               ) : pendingRequests.length > 0 ? (
                 pendingRequests.map((request: FriendRequest) => (
-                  <div key={request.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
+                  <div
+                    key={request.id}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
+                  >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={request.sender?.avatar || undefined} />
                       <AvatarFallback className="text-xs">
@@ -308,7 +333,9 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleAcceptRequest(request.id, request.sender?.username || "User")}
+                        onClick={() =>
+                          handleAcceptRequest(request.id, request.sender?.username || "User")
+                        }
                         className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
                       >
                         <Check className="h-3 w-3" />
@@ -316,7 +343,9 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRejectRequest(request.id, request.sender?.username || "User")}
+                        onClick={() =>
+                          handleRejectRequest(request.id, request.sender?.username || "User")
+                        }
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-3 w-3" />
