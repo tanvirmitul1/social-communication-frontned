@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useAppSelector, useAppDispatch } from "@/lib/store";
@@ -15,8 +15,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Bell, Home, Sun, Moon, LogOut, Settings, User } from "lucide-react";
+import {
+  MessageSquare,
+  Bell,
+  Home,
+  Sun,
+  Moon,
+  LogOut,
+  Settings,
+  User,
+} from "lucide-react";
 import { getInitials } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 
@@ -29,18 +37,13 @@ export function AppNavbar({ currentPage }: AppNavbarProps) {
   const dispatch = useAppDispatch();
   const { theme, setTheme } = useTheme();
   const { user } = useAppSelector((state) => state.auth);
-  // const { unreadCount } = useAppSelector((state) => state.messages);
-
   const [mounted, setMounted] = useState(false);
 
-  // useEffect only runs on the client, so we can safely show the theme toggle
-  useState(() => {
+  useEffect(() => {
     setMounted(true);
-  });
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   const handleLogout = () => {
     dispatch(clearAuth());
@@ -48,140 +51,151 @@ export function AppNavbar({ currentPage }: AppNavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/50 glass backdrop-blur-md">
-      <div className="mx-auto px-4">
+    <header className="sticky top-0 z-40 w-full border-b border-border/50 glass">
+      <div className="mx-auto px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push("/feed")}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
-                <span className="text-lg font-bold text-primary-foreground">S</span>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent hidden sm:inline">
-                Social
-              </span>
-            </button>
-          </div>
 
-          {/* Right side - Navigation and Actions */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Main Navigation */}
-            <nav className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant={currentPage === "feed" ? "secondary" : "ghost"}
-                size="sm"
+          {/* ─── Logo ─── */}
+          <button
+            onClick={() => router.push("/feed")}
+            className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+            aria-label="Go to feed"
+          >
+            <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm shrink-0">
+              <MessageSquare className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="text-base font-bold tracking-tight hidden sm:inline">
+              Social
+            </span>
+          </button>
+
+          {/* ─── Right cluster ─── */}
+          <div className="flex items-center gap-1 sm:gap-2">
+
+            {/* Navigation pills */}
+            <nav className="flex items-center gap-0.5 sm:gap-1 mr-1 sm:mr-2">
+              <NavButton
+                label="Feed"
+                icon={<Home className="h-4 w-4" />}
+                active={currentPage === "feed"}
                 onClick={() => router.push("/feed")}
-                className={cn(
-                  "gap-1 sm:gap-2 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3",
-                  currentPage === "feed"
-                    ? "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50"
-                    : "hover:bg-muted/50"
-                )}
-              >
-                <Home className="h-4 w-4" />
-                <span className="hidden sm:inline">Feed</span>
-              </Button>
-              <Button
-                variant={currentPage === "messages" ? "secondary" : "ghost"}
-                size="sm"
+              />
+              <NavButton
+                label="Messages"
+                icon={<MessageSquare className="h-4 w-4" />}
+                active={currentPage === "messages"}
                 onClick={() => router.push("/messages")}
-                className={cn(
-                  "gap-1 sm:gap-2 transition-all duration-200 relative text-xs sm:text-sm px-2 sm:px-3",
-                  currentPage === "messages"
-                    ? "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50"
-                    : "hover:bg-muted/50"
-                )}
-              >
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Messages</span>
-                {/* {unreadCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </Badge>
-                )} */}
-              </Button>
+              />
             </nav>
 
-            {/* Actions */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              {/* Theme Toggle */}
-              {mounted && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleTheme}
-                  className="hover:bg-muted/50 transition-colors"
-                  aria-label="Toggle theme"
-                >
-                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </Button>
-              )}
-
-              {/* Notifications */}
+            {/* Theme toggle */}
+            {mounted && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-muted/50 transition-colors relative"
-                aria-label="Notifications"
+                onClick={toggleTheme}
+                className="h-9 w-9 hover:bg-muted/60 transition-colors"
+                aria-label="Toggle theme"
               >
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                {theme === "dark" ? (
+                  <Sun className="h-[18px] w-[18px]" />
+                ) : (
+                  <Moon className="h-[18px] w-[18px]" />
+                )}
               </Button>
+            )}
 
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-10 w-10 rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user?.avatar || undefined} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                        {getInitials(user?.username || "User")}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 glass">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.username}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => router.push(`/profile/${user?.id}`)}
-                    className="cursor-pointer gap-2"
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="cursor-pointer gap-2 text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {/* Notifications */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 hover:bg-muted/60 transition-colors relative"
+              aria-label="Notifications"
+            >
+              <Bell className="h-[18px] w-[18px]" />
+              {/* Unread dot — replace with dynamic count when API ready */}
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive border-2 border-background" />
+            </Button>
+
+            {/* User menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-primary/25 transition-all"
+                >
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={user?.avatar || undefined} />
+                    <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary text-xs font-semibold">
+                      {getInitials(user?.username || "User")}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" className="w-56 glass">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold leading-none">{user?.username}</p>
+                    <p className="text-xs leading-none text-muted-foreground mt-1">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => router.push(`/profile/${user?.id}`)}
+                  className="cursor-pointer gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
     </header>
+  );
+}
+
+/* ─── NavButton ─── */
+interface NavButtonProps {
+  label: string;
+  icon: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}
+
+function NavButton({ label, icon, active, onClick }: NavButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+        active
+          ? "text-primary bg-primary/8"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      )}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+      {/* Active underline indicator */}
+      {active && (
+        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-primary" />
+      )}
+    </button>
   );
 }
