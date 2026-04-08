@@ -448,4 +448,14 @@
   .card-elevated {
     @apply bg-card border border-border shadow-sm rounded-xl;
   }
+
+  /* Page-enter animation for route transitions */
+  .animate-page-in {
+    animation: page-in 0.25s var(--ease-out-expo) both;
+  }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

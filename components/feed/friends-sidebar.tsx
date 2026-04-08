@@ -11,13 +11,19 @@ import {
 import { useSearchUsersQuery, useGetSuggestedUsersQuery } from "@/lib/api/user-api.slice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { getInitials } from "@/lib/utils/format";
-import { MessageCircle, UserPlus, Check, X, Users, UserCheck } from "lucide-react";
+import {
+  MessageCircle,
+  UserPlus,
+  Check,
+  X,
+  Users,
+  UserCheck,
+  Search,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { User, FriendRequest } from "@/types";
 
@@ -34,6 +40,7 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   const { data: friendRequests, isLoading: requestsLoading } =
     useGetPendingFriendRequestsQuery(undefined);
   const pendingRequests = friendRequests?.data || [];
+
   const { data: searchResults, isLoading: searchLoading } = useSearchUsersQuery(
     { query: searchQuery, limit: 10 },
     { skip: searchQuery.length < 2 }
@@ -47,10 +54,8 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   const [acceptRequest] = useAcceptFriendRequestMutation();
   const [rejectRequest] = useRejectFriendRequestMutation();
 
-  const onlineFriends = Array.isArray(friends)
-    ? friends.filter((friend: User) => friend.isOnline)
-    : [];
-  const allFriends = Array.isArray(friends) ? friends : [];
+  const allFriends: User[] = Array.isArray(friends) ? friends : [];
+  const onlineFriends = allFriends.filter((f) => f.isOnline);
 
   const handleSendRequest = async (userId: string, username: string) => {
     try {
@@ -58,20 +63,18 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
       toast.success(`Friend request sent to ${username}`);
       setSentRequests((prev) => new Set([...prev, userId]));
     } catch (err: unknown) {
-      let errorMessage = "Failed to send friend request";
-      if (typeof err === "string") {
-        errorMessage = err;
-      } else if (err && typeof err === "object" && "data" in err) {
-        const errorData = (err as { data?: { message?: string; error?: string } }).data;
-        errorMessage = errorData?.message || errorData?.error || errorMessage;
+      let msg = "Failed to send friend request";
+      if (err && typeof err === "object" && "data" in err) {
+        const d = (err as { data?: { message?: string; error?: string } }).data;
+        msg = d?.message || d?.error || msg;
       } else if (err && typeof err === "object" && "message" in err) {
-        errorMessage = (err as Error).message;
+        msg = (err as Error).message;
       }
-      if (errorMessage.includes("already sent") || errorMessage.includes("pending")) {
+      if (msg.includes("already sent") || msg.includes("pending")) {
         toast.error(`Friend request already sent to ${username}`);
         setSentRequests((prev) => new Set([...prev, userId]));
       } else {
-        toast.error(errorMessage);
+        toast.error(msg);
       }
     }
   };
@@ -79,298 +82,303 @@ export function FriendsSidebar({ onOpenChat }: FriendsSidebarProps) {
   const handleAcceptRequest = async (requestId: string, username: string) => {
     try {
       await acceptRequest(requestId).unwrap();
-      toast.success(`Accepted friend request from ${username}`);
-    } catch (err: unknown) {
-      let errorMessage = "Failed to accept request";
-      if (typeof err === "string") {
-        errorMessage = err;
-      } else if (err && typeof err === "object" && "data" in err) {
-        const errorData = (err as { data?: { message?: string; error?: string } }).data;
-        errorMessage = errorData?.message || errorData?.error || errorMessage;
-      } else if (err && typeof err === "object" && "message" in err) {
-        errorMessage = (err as Error).message;
-      }
-      toast.error(errorMessage);
+      toast.success(`Accepted ${username}'s request`);
+    } catch {
+      toast.error("Failed to accept request");
     }
   };
 
   const handleRejectRequest = async (requestId: string, username: string) => {
     try {
       await rejectRequest(requestId).unwrap();
-      toast.success(`Rejected friend request from ${username}`);
-    } catch (err: unknown) {
-      let errorMessage = "Failed to reject request";
-      if (typeof err === "string") {
-        errorMessage = err;
-      } else if (err && typeof err === "object" && "data" in err) {
-        const errorData = (err as { data?: { message?: string; error?: string } }).data;
-        errorMessage = errorData?.message || errorData?.error || errorMessage;
-      } else if (err && typeof err === "object" && "message" in err) {
-        errorMessage = (err as Error).message;
-      }
-      toast.error(errorMessage);
+      toast.success(`Rejected ${username}'s request`);
+    } catch {
+      toast.error("Failed to reject request");
     }
   };
 
   return (
-    <div className="w-80 shrink-0 border-l border-border/50 glass sticky top-0 h-[calc(100vh-64px)] hidden lg:block overflow-hidden">
-      <div className="p-5 border-b border-border/50 bg-linear-to-b from-primary/5 to-transparent">
-        <h3 className="font-semibold text-lg truncate">Friends</h3>
-        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-          <span className="flex items-center gap-1 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+    <aside className="w-72 shrink-0 border-l border-border/50 glass sticky top-0 h-[calc(100vh-64px)] hidden lg:flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-4 border-b border-border/50">
+        <div className="flex items-baseline justify-between">
+          <h3 className="font-semibold text-base">Friends</h3>
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-success shrink-0" />
             {onlineFriends.length} online
           </span>
-          <span className="text-border shrink-0">•</span>
-          <span className="truncate">{allFriends.length} total</span>
-        </p>
+        </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-[calc(100%-73px)]">
-        <TabsList className="grid w-full grid-cols-3 m-2 shrink-0">
-          <TabsTrigger value="friends" className="text-xs px-1">
-            <Users className="h-3 w-3 mr-1" />
-            <span className="hidden sm:inline">Friends</span>
+      {/* Tabs */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-col flex-1 overflow-hidden"
+      >
+        <TabsList className="grid grid-cols-3 mx-3 mt-2 shrink-0 h-9 bg-muted/50">
+          <TabsTrigger value="friends" className="text-xs gap-1.5 data-[state=active]:bg-background">
+            <Users className="h-3.5 w-3.5" />
+            Friends
           </TabsTrigger>
-          <TabsTrigger value="suggestions" className="text-xs px-1">
-            <UserPlus className="h-3 w-3 mr-1" />
-            <span className="hidden sm:inline">Find</span>
+          <TabsTrigger value="suggestions" className="text-xs gap-1.5 data-[state=active]:bg-background">
+            <UserPlus className="h-3.5 w-3.5" />
+            Find
           </TabsTrigger>
-          <TabsTrigger value="requests" className="text-xs relative px-1">
-            <UserCheck className="h-3 w-3 mr-1" />
-            <span className="hidden sm:inline">Requests</span>
+          <TabsTrigger value="requests" className="text-xs gap-1.5 relative data-[state=active]:bg-background">
+            <UserCheck className="h-3.5 w-3.5" />
+            Requests
             {pendingRequests.length > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-red-500">
+              <Badge className="absolute -top-1.5 -right-1 h-4 min-w-4 p-0 text-[10px] flex items-center justify-center bg-destructive border-0">
                 {pendingRequests.length}
               </Badge>
             )}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="friends" className="mt-0 flex-1 overflow-y-auto">
-          <div className="p-2 space-y-1">
+        {/* ── Friends tab ── */}
+        <TabsContent value="friends" className="mt-2 flex-1 overflow-y-auto">
+          <div className="px-2 pb-2 space-y-0.5">
             {friendsLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-1 min-w-0">
-                    <Skeleton className="h-3 w-20" />
-                    <Skeleton className="h-2 w-16" />
-                  </div>
-                </div>
-              ))
+              <FriendSkeletons count={5} />
             ) : allFriends.length > 0 ? (
               allFriends.map((friend: User) => (
-                <Button
+                <FriendRow
                   key={friend.id}
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-auto p-2.5 hover:bg-muted/50 rounded-xl transition-all duration-200 group/friend"
-                  onClick={() => onOpenChat(friend.id, friend.username, friend.avatar)}
-                >
-                  <div className="relative shrink-0">
-                    <Avatar className="h-10 w-10 ring-2 ring-border/30 group-hover/friend:ring-primary/30 transition-all">
-                      <AvatarImage src={friend.avatar || undefined} />
-                      <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                        {getInitials(friend.username)}
-                      </AvatarFallback>
-                    </Avatar>
-                    {friend.isOnline && (
-                      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-background animate-pulse" />
-                    )}
-                  </div>
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium truncate group-hover/friend:text-primary transition-colors">
-                      {friend.username}
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      {friend.isOnline && (
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-success shrink-0" />
-                      )}
-                      <span className="truncate">{friend.isOnline ? "Active now" : "Offline"}</span>
-                    </p>
-                  </div>
-                  <MessageCircle className="h-4 w-4 text-muted-foreground group-hover/friend:text-primary transition-colors shrink-0 opacity-0 group-hover/friend:opacity-100" />
-                </Button>
+                  user={friend}
+                  onMessage={() => onOpenChat(friend.id, friend.username, friend.avatar)}
+                />
               ))
             ) : (
-              <div className="text-center py-8">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No friends yet</p>
-                <p className="text-xs text-muted-foreground">Find people to connect with</p>
-              </div>
+              <EmptyTab
+                icon={<Users className="h-10 w-10" />}
+                title="No friends yet"
+                subtitle="Find people to connect with"
+              />
             )}
           </div>
         </TabsContent>
 
-        <TabsContent value="suggestions" className="mt-0 flex-1 flex flex-col overflow-hidden">
-          <div className="p-2 shrink-0">
-            <Input
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="mb-2 w-full"
-            />
+        {/* ── Suggestions tab ── */}
+        <TabsContent value="suggestions" className="mt-2 flex-1 flex flex-col overflow-hidden">
+          <div className="px-3 mb-2 shrink-0">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search users…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-sm bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-primary/40"
+              />
+            </div>
           </div>
+
           <div className="flex-1 overflow-y-auto">
-            <div className="p-2 space-y-1">
+            <div className="px-2 pb-2 space-y-0.5">
               {searchLoading || (suggestionsLoading && searchQuery.length < 2) ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                    <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                    <div className="flex-1 space-y-1 min-w-0">
-                      <Skeleton className="h-3 w-20" />
-                      <Skeleton className="h-2 w-16" />
-                    </div>
-                    <Skeleton className="h-8 w-16 shrink-0" />
-                  </div>
-                ))
+                <FriendSkeletons count={4} withAction />
               ) : searchQuery.length >= 2 ? (
                 searchResults?.data && searchResults.data.length > 0 ? (
                   searchResults.data
-                    .filter((user: User) => !sentRequests.has(user.id))
-                    .map((user: User) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/30 transition-colors group/user"
-                      >
-                        <Avatar className="h-10 w-10 ring-2 ring-border/30 shrink-0">
-                          <AvatarImage src={user.avatar || undefined} />
-                          <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                            {getInitials(user.username)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{user.username}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSendRequest(user.id, user.username)}
-                          className="h-8 px-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all shrink-0"
-                          aria-label={`Send friend request to ${user.username}`}
-                        >
-                          <UserPlus className="h-3 w-3" />
-                        </Button>
-                      </div>
+                    .filter((u: User) => !sentRequests.has(u.id))
+                    .map((u: User) => (
+                      <SuggestionRow
+                        key={u.id}
+                        user={u}
+                        onAdd={() => handleSendRequest(u.id, u.username)}
+                      />
                     ))
                 ) : (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground">No users found</p>
-                  </div>
+                  <EmptyTab
+                    icon={<Search className="h-10 w-10" />}
+                    title="No users found"
+                    subtitle="Try a different search"
+                  />
                 )
               ) : suggestions && suggestions.length > 0 ? (
                 <>
-                  <div className="px-2 py-1 mb-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
-                      Suggested for you
-                    </p>
-                  </div>
+                  <p className="px-3 pt-1 pb-2 text-xs font-medium text-muted-foreground/60 uppercase tracking-wider">
+                    Suggested for you
+                  </p>
                   {suggestions
-                    ?.filter((user: User) => !sentRequests.has(user.id))
-                    .map((user: User) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
-                      >
-                        <Avatar className="h-10 w-10 shrink-0">
-                          <AvatarImage src={user.avatar || undefined} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(user.username)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{user.username}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSendRequest(user.id, user.username)}
-                          className="h-8 px-2 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50 shrink-0"
-                        >
-                          <UserPlus className="h-3 w-3" />
-                        </Button>
-                      </div>
+                    .filter((u: User) => !sentRequests.has(u.id))
+                    .map((u: User) => (
+                      <SuggestionRow
+                        key={u.id}
+                        user={u}
+                        onAdd={() => handleSendRequest(u.id, u.username)}
+                      />
                     ))}
                 </>
-              ) : searchQuery.length < 2 ? (
-                <div className="text-center py-8">
-                  <UserPlus className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Find new friends</p>
-                  <p className="text-xs text-muted-foreground">Search or browse suggestions</p>
-                </div>
-              ) : null}
+              ) : (
+                <EmptyTab
+                  icon={<UserPlus className="h-10 w-10" />}
+                  title="Find new friends"
+                  subtitle="Search or browse suggestions"
+                />
+              )}
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="requests" className="mt-0 flex-1 overflow-y-auto">
-          <div className="p-2 space-y-1">
+        {/* ── Requests tab ── */}
+        <TabsContent value="requests" className="mt-2 flex-1 overflow-y-auto">
+          <div className="px-2 pb-2 space-y-0.5">
             {requestsLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
-                  <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-1 min-w-0">
-                    <Skeleton className="h-3 w-20" />
-                    <Skeleton className="h-2 w-16" />
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                  </div>
-                </div>
-              ))
+              <FriendSkeletons count={3} withAction />
             ) : pendingRequests.length > 0 ? (
-              pendingRequests.map((request: FriendRequest) => (
+              pendingRequests.map((req: FriendRequest) => (
                 <div
-                  key={request.id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30"
+                  key={req.id}
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/40 transition-colors"
                 >
-                  <Avatar className="h-10 w-10 shrink-0">
-                    <AvatarImage src={request.sender?.avatar || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {getInitials(request.sender?.username || "U")}
+                  <Avatar className="h-10 w-10 shrink-0 ring-2 ring-border/30">
+                    <AvatarImage src={req.sender?.avatar || undefined} />
+                    <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
+                      {getInitials(req.sender?.username || "U")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{request.sender?.username}</p>
-                    <p className="text-xs text-muted-foreground truncate">Wants to be friends</p>
+                    <p className="text-sm font-medium truncate">{req.sender?.username}</p>
+                    <p className="text-xs text-muted-foreground">Wants to connect</p>
                   </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
+                  <div className="flex gap-1.5 shrink-0">
+                    <button
                       onClick={() =>
-                        handleAcceptRequest(request.id, request.sender?.username || "User")
+                        handleAcceptRequest(req.id, req.sender?.username || "User")
                       }
-                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="h-8 w-8 rounded-full bg-success/10 hover:bg-success/20 text-success flex items-center justify-center transition-colors"
+                      aria-label="Accept"
                     >
-                      <Check className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                      <Check className="h-3.5 w-3.5" />
+                    </button>
+                    <button
                       onClick={() =>
-                        handleRejectRequest(request.id, request.sender?.username || "User")
+                        handleRejectRequest(req.id, req.sender?.username || "User")
                       }
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="h-8 w-8 rounded-full bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex items-center justify-center transition-colors"
+                      aria-label="Reject"
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-8">
-                <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No friend requests</p>
-                <p className="text-xs text-muted-foreground">New requests will appear here</p>
-              </div>
+              <EmptyTab
+                icon={<UserCheck className="h-10 w-10" />}
+                title="No requests"
+                subtitle="New requests will appear here"
+              />
             )}
           </div>
         </TabsContent>
       </Tabs>
+    </aside>
+  );
+}
+
+/* ── Friend row ── */
+function FriendRow({ user, onMessage }: { user: User; onMessage: () => void }) {
+  return (
+    <button
+      onClick={onMessage}
+      className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/50 transition-all duration-150 group/item text-left"
+    >
+      <div className="relative shrink-0">
+        <Avatar className="h-9 w-9 ring-2 ring-border/30 group-hover/item:ring-primary/25 transition-all">
+          <AvatarImage src={user.avatar || undefined} />
+          <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
+            {getInitials(user.username)}
+          </AvatarFallback>
+        </Avatar>
+        {user.isOnline && (
+          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-background" />
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate group-hover/item:text-primary transition-colors">
+          {user.username}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">
+          {user.isOnline ? (
+            <span className="text-success">Active now</span>
+          ) : (
+            "Offline"
+          )}
+        </p>
+      </div>
+
+      <MessageCircle className="h-4 w-4 text-muted-foreground/40 group-hover/item:text-primary transition-all opacity-0 group-hover/item:opacity-100 shrink-0" />
+    </button>
+  );
+}
+
+/* ── Suggestion row ── */
+function SuggestionRow({ user, onAdd }: { user: User; onAdd: () => void }) {
+  return (
+    <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/40 transition-colors">
+      <Avatar className="h-9 w-9 shrink-0 ring-2 ring-border/30">
+        <AvatarImage src={user.avatar || undefined} />
+        <AvatarFallback className="text-xs bg-linear-to-br from-primary/20 to-primary/10 text-primary font-medium">
+          {getInitials(user.username)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{user.username}</p>
+        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+      </div>
+      <button
+        onClick={onAdd}
+        className="h-8 w-8 rounded-full bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors shrink-0"
+        aria-label={`Add ${user.username}`}
+      >
+        <UserPlus className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/* ── Loading skeletons ── */
+function FriendSkeletons({
+  count,
+  withAction,
+}: {
+  count: number;
+  withAction?: boolean;
+}) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl">
+          <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+          <div className="flex-1 space-y-1.5 min-w-0">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-2.5 w-16" />
+          </div>
+          {withAction && <Skeleton className="h-8 w-8 rounded-full shrink-0" />}
+        </div>
+      ))}
+    </>
+  );
+}
+
+/* ── Empty state ── */
+function EmptyTab({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+      <div className="text-muted-foreground/30 mb-3">{icon}</div>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
     </div>
   );
 }
