@@ -11,11 +11,19 @@ import { PostCard } from "@/components/feed/post-card";
 import { FeedSkeleton } from "@/components/feed/feed-skeleton";
 import { FriendsSidebar } from "@/components/feed/friends-sidebar";
 import { MessagePopup } from "@/components/feed/message-popup";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Home, Compass, TrendingUp, Bookmark, RefreshCw, Sparkles } from "lucide-react";
+import {
+  Home,
+  Compass,
+  TrendingUp,
+  Bookmark,
+  RefreshCw,
+  Sparkles,
+  ChevronRight,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { FeedType } from "@/types/feed.types";
 
 interface ChatWindow {
@@ -23,6 +31,12 @@ interface ChatWindow {
   username: string;
   avatar?: string | null;
 }
+
+const NAV_ITEMS = [
+  { type: "following" as FeedType, label: "Following", icon: Home },
+  { type: "discover" as FeedType, label: "Discover", icon: Compass },
+  { type: "trending" as FeedType, label: "Trending", icon: TrendingUp },
+] as const;
 
 export default function FeedPage() {
   const dispatch = useAppDispatch();
@@ -36,10 +50,7 @@ export default function FeedPage() {
     cursor,
   });
 
-  // Infinite scroll
-  const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.5,
-  });
+  const { ref: loadMoreRef, inView } = useInView({ threshold: 0.5 });
 
   useEffect(() => {
     if (inView && data?.hasMore && !isFetching) {
@@ -47,51 +58,43 @@ export default function FeedPage() {
     }
   }, [inView, data, isFetching]);
 
-  // Reset cursor when feed type changes
   useEffect(() => {
     setCursor(undefined);
   }, [feedType]);
 
   const handleOpenChat = useCallback(
     (userId: string, username: string, avatar?: string | null) => {
-      // Check if chat already open
-      if (chatWindows.some((chat) => chat.userId === userId)) {
-        return;
-      }
-
-      // Max 3 chat windows
+      if (chatWindows.some((chat) => chat.userId === userId)) return;
       if (chatWindows.length >= 3) {
         toast.error("Maximum 3 chat windows allowed");
         return;
       }
-
       setChatWindows([...chatWindows, { userId, username, avatar }]);
     },
     [chatWindows]
   );
 
-  // WebSocket message handling
   useEffect(() => {
     const handleNewMessage = (message: any) => {
-      // Add message to Redux store
       const conversationId = message.groupId || message.senderId;
       dispatch(addMessage({ conversationId, message }));
 
-      // Auto-open chat if not already open and message is from another user
       if (message.senderId !== user?.id) {
-        const isAlreadyOpen = chatWindows.some((chat) => chat.userId === message.senderId);
+        const isAlreadyOpen = chatWindows.some(
+          (chat) => chat.userId === message.senderId
+        );
         if (!isAlreadyOpen && chatWindows.length < 3) {
-          // Find sender info (you might need to fetch this from API)
-          handleOpenChat(message.senderId, message.senderUsername || "User", message.senderAvatar);
+          handleOpenChat(
+            message.senderId,
+            message.senderUsername || "User",
+            message.senderAvatar
+          );
         }
       }
     };
 
     socketManager.onMessageReceived(handleNewMessage);
-
-    return () => {
-      socketManager.removeAllListeners("message:received");
-    };
+    return () => { socketManager.removeAllListeners("message:received"); };
   }, [dispatch, user?.id, chatWindows, handleOpenChat]);
 
   const handleCloseChat = useCallback(
@@ -107,95 +110,74 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] bg-gradient-to-br from-background via-background to-muted/20 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
-      {/* Main Layout */}
+    <div className="h-[calc(100vh-64px)] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border bg-background">
       <div className="flex max-w-full min-h-full">
-        {/* Left Sidebar - Navigation */}
-        <aside className="w-64 shrink-0 border-r bg-card/80 backdrop-blur-sm sticky top-0 h-[calc(100vh-64px)] hidden 2xl:block overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border/80">
-          <div className="p-4">
-            <nav className="space-y-2">
-              <Button
-                variant={feedType === "following" ? "secondary" : "ghost"}
-                className="w-full justify-start hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50 transition-all duration-200"
-                onClick={() => setFeedType("following")}
-              >
-                <Home className="mr-3 h-5 w-5" />
-                Following
-              </Button>
-              <Button
-                variant={feedType === "discover" ? "secondary" : "ghost"}
-                className="w-full justify-start hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 dark:hover:from-green-950/50 dark:hover:to-blue-950/50 transition-all duration-200"
-                onClick={() => setFeedType("discover")}
-              >
-                <Compass className="mr-3 h-5 w-5" />
-                Discover
-              </Button>
-              <Button
-                variant={feedType === "trending" ? "secondary" : "ghost"}
-                className="w-full justify-start hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 dark:hover:from-orange-950/50 dark:hover:to-red-950/50 transition-all duration-200"
-                onClick={() => setFeedType("trending")}
-              >
-                <TrendingUp className="mr-3 h-5 w-5" />
-                Trending
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 dark:hover:from-yellow-950/50 dark:hover:to-orange-950/50 transition-all duration-200"
-              >
-                <Bookmark className="mr-3 h-5 w-5" />
-                Saved
-              </Button>
+
+        {/* ─── Left sidebar ─── */}
+        <aside className="w-56 shrink-0 border-r border-border/50 bg-card/60 sticky top-0 h-[calc(100vh-64px)] hidden 2xl:flex flex-col overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
+          <div className="p-3 pt-5">
+            <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
+              Explore
+            </p>
+            <nav className="space-y-0.5">
+              {NAV_ITEMS.map(({ type, label, icon: Icon }) => (
+                <SidebarNavItem
+                  key={type}
+                  label={label}
+                  icon={<Icon className="h-4 w-4 shrink-0" />}
+                  active={feedType === type}
+                  onClick={() => setFeedType(type)}
+                />
+              ))}
+              <SidebarNavItem
+                label="Saved"
+                icon={<Bookmark className="h-4 w-4 shrink-0" />}
+                active={false}
+                onClick={() => {}}
+              />
             </nav>
           </div>
         </aside>
 
-        {/* Center Feed */}
+        {/* ─── Center feed ─── */}
         <main className="flex-1 min-w-0 max-w-2xl mx-auto">
-          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b border-border/50 lg:hidden">
-            <div className="p-4">
-              <Tabs value={feedType} onValueChange={(v) => setFeedType(v as FeedType)}>
-                <TabsList className="w-full bg-muted/50 backdrop-blur-sm">
-                  <TabsTrigger
-                    value="following"
-                    className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white"
-                  >
-                    <Home className="h-4 w-4 mr-2" />
-                    Following
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="discover"
-                    className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
-                  >
-                    <Compass className="h-4 w-4 mr-2" />
-                    Discover
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="trending"
-                    className="flex-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white"
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Trending
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+
+          {/* Mobile tab bar */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border/50 lg:hidden">
+            <div className="flex">
+              {NAV_ITEMS.map(({ type, label, icon: Icon }) => (
+                <button
+                  key={type}
+                  onClick={() => setFeedType(type)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-3 text-xs font-medium border-b-2 transition-all duration-200",
+                    feedType === type
+                      ? "text-primary border-primary"
+                      : "text-muted-foreground border-transparent hover:text-foreground hover:border-border"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="p-4 space-y-6">
-            {/* Create Post */}
+          <div className="p-4 space-y-4">
+            {/* Create post */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.25 }}
             >
               <CreatePostCard />
             </motion.div>
 
-            {/* Feed Type Header - Desktop */}
-            <div className="hidden lg:flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" />
-                <h3 className="text-lg font-semibold capitalize bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            {/* Feed type header — desktop only */}
+            <div className="hidden lg:flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                <h3 className="text-sm font-semibold capitalize text-foreground">
                   {feedType} Feed
                 </h3>
               </div>
@@ -203,9 +185,9 @@ export default function FeedPage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleRefresh}
-                className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50 transition-all duration-200"
+                className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-3.5 w-3.5" />
                 Refresh
               </Button>
             </div>
@@ -214,39 +196,30 @@ export default function FeedPage() {
             {isLoading && !data ? (
               <FeedSkeleton />
             ) : error ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50"
-              >
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/20 dark:to-red-800/20 flex items-center justify-center mx-auto mb-4">
-                  <RefreshCw className="h-6 w-6 text-red-500" />
-                </div>
-                <p className="text-muted-foreground mb-4">Failed to load feed</p>
-                <Button
-                  onClick={handleRefresh}
-                  variant="outline"
-                  className="hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50"
-                >
-                  Retry
-                </Button>
-              </motion.div>
+              <EmptyState
+                icon={<RefreshCw className="h-6 w-6 text-destructive" />}
+                title="Failed to load feed"
+                action={
+                  <Button variant="outline" size="sm" onClick={handleRefresh}>
+                    Retry
+                  </Button>
+                }
+              />
             ) : data && data.posts.length > 0 ? (
               <>
                 {data.posts.map((post, index) => (
                   <motion.div
                     key={post.id}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    transition={{ duration: 0.25, delay: Math.min(index * 0.06, 0.3) }}
                   >
                     <PostCard post={post} />
                   </motion.div>
                 ))}
 
-                {/* Load More Trigger */}
                 {data.hasMore && (
-                  <div ref={loadMoreRef} className="py-8">
+                  <div ref={loadMoreRef} className="py-6">
                     {isFetching && <FeedSkeleton />}
                   </div>
                 )}
@@ -255,35 +228,30 @@ export default function FeedPage() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-center py-8"
+                    className="text-center py-8 space-y-2"
                   >
-                    <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground">You have reached the end</p>
+                    <div className="h-px w-16 bg-border mx-auto" />
+                    <p className="text-xs text-muted-foreground">
+                      You&apos;re all caught up
+                    </p>
                   </motion.div>
                 )}
               </>
             ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-12 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50"
-              >
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-100 to-purple-200 dark:from-blue-900/20 dark:to-purple-800/20 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="h-8 w-8 text-blue-500" />
-                </div>
-                <p className="text-muted-foreground mb-2">No posts yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Be the first to share something amazing!
-                </p>
-              </motion.div>
+              <EmptyState
+                icon={<Sparkles className="h-8 w-8 text-primary/60" />}
+                title="No posts yet"
+                description="Be the first to share something!"
+              />
             )}
           </div>
         </main>
 
+        {/* ─── Right sidebar ─── */}
         <FriendsSidebar onOpenChat={handleOpenChat} />
       </div>
 
-      {/* Chat Popup Windows */}
+      {/* ─── Floating chat windows ─── */}
       <AnimatePresence>
         {chatWindows.map((chat, index) => (
           <MessagePopup
@@ -297,5 +265,73 @@ export default function FeedPage() {
         ))}
       </AnimatePresence>
     </div>
+  );
+}
+
+/* ─── Sidebar nav item ─── */
+function SidebarNavItem({
+  label,
+  icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group",
+        active
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      )}
+    >
+      <span
+        className={cn(
+          "transition-colors",
+          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+        )}
+      >
+        {icon}
+      </span>
+      <span className="flex-1 text-left">{label}</span>
+      {active && <ChevronRight className="h-3.5 w-3.5 opacity-60" />}
+    </button>
+  );
+}
+
+/* ─── Empty / error state ─── */
+function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="text-center py-14 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 space-y-4"
+    >
+      <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mx-auto">
+        {icon}
+      </div>
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        {description && (
+          <p className="text-xs text-muted-foreground">{description}</p>
+        )}
+      </div>
+      {action}
+    </motion.div>
   );
 }
