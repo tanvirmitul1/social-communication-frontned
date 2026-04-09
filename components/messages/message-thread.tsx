@@ -559,3 +559,61 @@ function DocumentCard({ file, isOwn, radius }: { file: MessageFile; isOwn: boole
     </a>
   );
 }
+
+/* ─────────────────────────────────────────────
+   Pending (optimistic) bubble — shown while sending
+───────────────────────────────────────────── */
+function PendingBubble({ pending }: { pending: PendingMessage }) {
+  const hasFiles = pending.files && pending.files.length > 0;
+  const mediaFiles = pending.files?.filter(f => f.category === "image" || f.category === "video") ?? [];
+
+  return (
+    <div className="flex items-end gap-2 flex-row-reverse self-end mt-3 max-w-[80%] sm:max-w-[65%] animate-in fade-in slide-in-from-bottom-1 duration-150">
+      <div className="w-8 shrink-0" />
+      <div className="flex flex-col gap-0.5 items-end">
+
+        {/* Media previews with upload overlay */}
+        {mediaFiles.length > 0 && (
+          <div className={cn(
+            "overflow-hidden rounded-2xl",
+            mediaFiles.length === 1 ? "w-[200px]" : "grid grid-cols-2 gap-0.5 w-[200px]"
+          )}>
+            {mediaFiles.slice(0, 4).map((f, i) => (
+              <div key={i} className="aspect-square bg-muted relative overflow-hidden">
+                <img src={f.previewUrl} alt="" className="w-full h-full object-cover opacity-50" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Non-media file pills */}
+        {pending.files?.filter(f => f.category === "audio" || f.category === "document").map((f, i) => (
+          <div key={i} className="flex items-center gap-2 px-3.5 py-2.5 w-[240px] bg-primary/70 text-primary-foreground rounded-2xl">
+            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+            <span className="text-xs truncate">{f.name}</span>
+          </div>
+        ))}
+
+        {/* Text bubble */}
+        {pending.content && (
+          <div className="px-3.5 py-2 text-sm leading-relaxed break-words bg-primary/70 text-primary-foreground rounded-2xl">
+            <span>{pending.content}</span>
+            <span className="inline-flex items-center gap-1 ml-2 text-[11px] float-right mt-1 -mb-0.5 text-primary-foreground/50">
+              <Clock className="h-3 w-3" />
+            </span>
+          </div>
+        )}
+
+        {/* Sending indicator when no text */}
+        {!pending.content && !hasFiles && (
+          <div className="px-3.5 py-2 bg-primary/70 text-primary-foreground rounded-2xl">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

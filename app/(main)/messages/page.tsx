@@ -41,7 +41,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getInitials } from "@/lib/utils/format";
 import { ConversationItem } from "@/components/messages/conversation-item";
-import { MessageThread } from "@/components/messages/message-thread";
+import { MessageThread, type PendingMessage } from "@/components/messages/message-thread";
 import { MessageInput } from "@/components/messages/message-input";
 import { NewConversationModal } from "@/components/messages/new-conversation-modal";
 import { CreateGroupModal } from "@/components/messages/create-group-modal";
@@ -70,6 +70,7 @@ export default function MessagesPage() {
   const [friendRequestsOpen, setFriendRequestsOpen] = useState(false);
   const [friendsListOpen, setFriendsListOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
   
   const { pendingCount } = usePendingFriendRequests();
   const [sendMessageWithFiles] = useSendMessageWithFilesMutation();
@@ -115,11 +116,9 @@ export default function MessagesPage() {
   const handleConversationClick = (conversationId: string, type: "direct" | "group") => {
     dispatch(setActiveConversation(conversationId));
     dispatch(resetUnreadCount(conversationId));
+    setPendingMessages([]);
 
-    // Close sidebar on mobile when conversation is selected
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+    if (isMobile) setSidebarOpen(false);
 
     if (!messagesByConversation[conversationId]) {
       if (type === "group") {
@@ -135,35 +134,47 @@ export default function MessagesPage() {
     const activeConv = conversations.find((c) => c.id === activeConversation);
     if (!activeConv) return;
 
-    const fd = new FormData();
-    if (content) fd.append("content", content);
-    files.forEach((f) => fd.append("files", f));
-    if (activeConv.type === "group") {
-      fd.append("groupId", activeConversation);
-    } else {
-      fd.append("receiverId", activeConversation);
-    }
+    const tempId = `pending-${Date.now()}`;
+    const fileCategories = files.map(f => ({
+      name: f.name,
+      category: (f.type.startsWith("image/") ? "image" : f.type.startsWith("video/") ? "video" : f.type.startsWith("audio/") ? "audio" : "document") as PendingMessage["files"][0]["category"],
+      previewUrl: URL.createObjectURL(f),
+    }));
 
-    const result = await sendMessageWithFiles(fd).unwrap();
-    // Add to local store so it appears immediately
-    dispatch(addMessage({ conversationId: activeConversation, message: result.data ?? result }));
+    setPendingMessages(prev => [...prev, { tempId, content, createdAt: new Date().toISOString(), files: fileCategories }]);
+
+    try {
+      const fd = new FormData();
+      if (content) fd.append("content", content);
+      files.forEach((f) => fd.append("files", f));
+      if (activeConv.type === "group") fd.append("groupId", activeConversation);
+      else fd.append("receiverId", activeConversation);
+
+      const result = await sendMessageWithFiles(fd).unwrap();
+      dispatch(addMessage({ conversationId: activeConversation, message: result.data ?? result }));
+    } finally {
+      fileCategories.forEach(f => URL.revokeObjectURL(f.previewUrl));
+      setPendingMessages(prev => prev.filter(p => p.tempId !== tempId));
+    }
   };
 
   const handleSendMessage = (content: string) => {
     if (!activeConversation || !user) return;
-
     const activeConv = conversations.find((c) => c.id === activeConversation);
     if (!activeConv) return;
+
+    const tempId = `pending-${Date.now()}`;
+    setPendingMessages(prev => [...prev, { tempId, content, createdAt: new Date().toISOString() }]);
 
     const payload: SendMessagePayload = {
       content,
       type: "TEXT",
-      ...(activeConv.type === "group"
-        ? { groupId: activeConversation }
-        : { receiverId: activeConversation }),
+      ...(activeConv.type === "group" ? { groupId: activeConversation } : { receiverId: activeConversation }),
     };
 
-    dispatch(sendMessageAction(payload));
+    dispatch(sendMessageAction(payload)).finally(() => {
+      setPendingMessages(prev => prev.filter(p => p.tempId !== tempId));
+    });
     socketManager.sendMessage(payload);
   };
 
@@ -401,6 +412,7 @@ export default function MessagesPage() {
               messages={currentMessages}
               currentUser={user}
               isLoading={messagesLoading}
+              pendingMessages={pendingMessages}
               otherUser={
                 activeConv.type === "direct"
                   ? { id: activeConv.id, username: activeConv.title, avatar: activeConv.avatar }
