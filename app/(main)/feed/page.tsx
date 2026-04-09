@@ -65,7 +65,14 @@ export default function FeedPage() {
   const handleOpenChat = useCallback(
     (userId: string, username: string, avatar?: string | null) => {
       if (chatWindows.some((chat) => chat.userId === userId)) return;
-      if (chatWindows.length >= 3) {
+      // On mobile only allow 1 window, on desktop allow 3
+      const maxWindows = typeof window !== "undefined" && window.innerWidth < 640 ? 1 : 3;
+      if (chatWindows.length >= maxWindows) {
+        // Replace the oldest window on mobile
+        if (maxWindows === 1) {
+          setChatWindows([{ userId, username, avatar }]);
+          return;
+        }
         toast.error("Maximum 3 chat windows allowed");
         return;
       }

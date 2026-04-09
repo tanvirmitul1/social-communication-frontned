@@ -19,13 +19,13 @@ import {
 import type { SendMessagePayload } from "@/types";
 import { setActiveConversation } from "@/lib/store/slices/ui.slice";
 import { resetUnreadCount } from "@/lib/store/slices/conversations.slice";
-import { 
-  MessageCircle, 
-  Users, 
-  Phone, 
-  Settings, 
-  Search, 
-  Plus, 
+import {
+  MessageCircle,
+  Users,
+  Phone,
+  Settings,
+  Search,
+  Plus,
   UserPlus,
   MoreHorizontal,
   ArrowLeft,
@@ -33,7 +33,7 @@ import {
   Video,
   Smile,
   Paperclip,
-  Send
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,9 +58,11 @@ export default function MessagesPage() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { conversations } = useAppSelector((state) => state.conversations);
-  const { messagesByConversation, isLoading: messagesLoading } = useAppSelector((state) => state.messages);
+  const { messagesByConversation, isLoading: messagesLoading } = useAppSelector(
+    (state) => state.messages
+  );
   const { activeConversationId: activeConversation } = useAppSelector((state) => state.ui);
-  
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"messages" | "groups" | "calls">("messages");
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,7 +73,7 @@ export default function MessagesPage() {
   const [friendsListOpen, setFriendsListOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
-  
+
   const { pendingCount } = usePendingFriendRequests();
   const [sendMessageWithFiles] = useSendMessageWithFilesMutation();
 
@@ -91,10 +93,10 @@ export default function MessagesPage() {
         setSidebarOpen(true);
       }
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
@@ -135,13 +137,22 @@ export default function MessagesPage() {
     if (!activeConv) return;
 
     const tempId = `pending-${Date.now()}`;
-    const fileCategories = files.map(f => ({
+    const fileCategories = files.map((f) => ({
       name: f.name,
-      category: (f.type.startsWith("image/") ? "image" : f.type.startsWith("video/") ? "video" : f.type.startsWith("audio/") ? "audio" : "document") as PendingMessage["files"][0]["category"],
+      category: (f.type.startsWith("image/")
+        ? "image"
+        : f.type.startsWith("video/")
+          ? "video"
+          : f.type.startsWith("audio/")
+            ? "audio"
+            : "document") as PendingMessage["files"][0]["category"],
       previewUrl: URL.createObjectURL(f),
     }));
 
-    setPendingMessages(prev => [...prev, { tempId, content, createdAt: new Date().toISOString(), files: fileCategories }]);
+    setPendingMessages((prev) => [
+      ...prev,
+      { tempId, content, createdAt: new Date().toISOString(), files: fileCategories },
+    ]);
 
     try {
       const fd = new FormData();
@@ -153,8 +164,8 @@ export default function MessagesPage() {
       const result = await sendMessageWithFiles(fd).unwrap();
       dispatch(addMessage({ conversationId: activeConversation, message: result.data ?? result }));
     } finally {
-      fileCategories.forEach(f => URL.revokeObjectURL(f.previewUrl));
-      setPendingMessages(prev => prev.filter(p => p.tempId !== tempId));
+      fileCategories.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+      setPendingMessages((prev) => prev.filter((p) => p.tempId !== tempId));
     }
   };
 
@@ -164,16 +175,21 @@ export default function MessagesPage() {
     if (!activeConv) return;
 
     const tempId = `pending-${Date.now()}`;
-    setPendingMessages(prev => [...prev, { tempId, content, createdAt: new Date().toISOString() }]);
+    setPendingMessages((prev) => [
+      ...prev,
+      { tempId, content, createdAt: new Date().toISOString() },
+    ]);
 
     const payload: SendMessagePayload = {
       content,
       type: "TEXT",
-      ...(activeConv.type === "group" ? { groupId: activeConversation } : { receiverId: activeConversation }),
+      ...(activeConv.type === "group"
+        ? { groupId: activeConversation }
+        : { receiverId: activeConversation }),
     };
 
     dispatch(sendMessageAction(payload)).finally(() => {
-      setPendingMessages(prev => prev.filter(p => p.tempId !== tempId));
+      setPendingMessages((prev) => prev.filter((p) => p.tempId !== tempId));
     });
     socketManager.sendMessage(payload);
   };
@@ -234,7 +250,9 @@ export default function MessagesPage() {
           // Desktop: Always show with fixed width
           "hidden md:flex md:w-80",
           // Mobile: Full screen overlay when open
-          isMobile && sidebarOpen && "fixed inset-0 z-50 flex w-full bg-background md:relative md:inset-auto md:z-auto md:w-80"
+          isMobile &&
+            sidebarOpen &&
+            "fixed inset-0 z-50 flex w-full bg-background md:relative md:inset-auto md:z-auto md:w-80"
         )}
       >
         {/* Header */}
@@ -254,7 +272,7 @@ export default function MessagesPage() {
               Messages
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -336,8 +354,8 @@ export default function MessagesPage() {
                 <p className="mb-4 text-sm text-muted-foreground max-w-48">
                   Start a new conversation to get started
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   onClick={() => setNewConversationOpen(true)}
                   className="bg-primary hover:bg-primary/90"
                 >
@@ -374,26 +392,28 @@ export default function MessagesPage() {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                
+
                 <Avatar className="h-10 w-10 ring-2 ring-border/30">
                   <AvatarImage src={activeConv.avatar || undefined} />
                   <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
                     {getInitials(activeConv.title)}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="min-w-0 flex-1">
                   <h2 className="font-semibold text-foreground truncate">{activeConv.title}</h2>
                   {activeConv.isTyping ? (
                     <p className="text-xs text-primary animate-pulse">Typing...</p>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      {activeConv.type === "group" ? `${activeConv.participants?.length || 0} members` : "Active now"}
+                      {activeConv.type === "group"
+                        ? `${activeConv.participants?.length || 0} members`
+                        : "Active now"}
                     </p>
                   )}
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted/50">
                   <Phone className="h-4 w-4" />
@@ -439,22 +459,23 @@ export default function MessagesPage() {
                   <MessageCircle className="h-12 w-12 text-primary" />
                 </div>
               </div>
-              
+
               <h2 className="mb-3 text-2xl font-bold text-foreground">Start Messaging</h2>
               <p className="mb-8 text-muted-foreground leading-relaxed">
-                Select a conversation from the sidebar or start a new chat to begin messaging with your contacts.
+                Select a conversation from the sidebar or start a new chat to begin messaging with
+                your contacts.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row justify-center gap-3">
-                <Button 
+                <Button
                   onClick={() => setNewConversationOpen(true)}
                   className="bg-primary hover:bg-primary/90"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   New Conversation
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setCreateGroupOpen(true)}
                   className="border-border/50 hover:bg-muted/50"
                 >
@@ -462,7 +483,7 @@ export default function MessagesPage() {
                   Create Group
                 </Button>
               </div>
-              
+
               {!sidebarOpen && (
                 <Button
                   variant="ghost"
@@ -479,7 +500,7 @@ export default function MessagesPage() {
 
       {/* Mobile Backdrop */}
       {isMobile && sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
