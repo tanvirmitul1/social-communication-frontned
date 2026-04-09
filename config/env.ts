@@ -5,8 +5,8 @@
 
 export const env = {
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1",
-    wsUrl: process.env.NEXT_PUBLIC_WS_URL || "http://localhost:3000",
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1",
+    wsUrl: process.env.NEXT_PUBLIC_WS_URL || "http://localhost:5000",
   },
   app: {
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
