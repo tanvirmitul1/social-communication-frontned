@@ -50,6 +50,7 @@ import { FriendRequestsModal } from "@/components/messages/friend-requests-modal
 import { FriendsListModal } from "@/components/messages/friends-list-modal";
 import { UserMenu } from "@/components/shared/user-menu";
 import { usePendingFriendRequests } from "@/hooks/use-pending-friend-requests";
+import { useSendMessageWithFilesMutation } from "@/lib/api/message-api.slice";
 import { socketManager } from "@/lib/socket/socket-manager";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,7 @@ export default function MessagesPage() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { conversations } = useAppSelector((state) => state.conversations);
-  const { messagesByConversation } = useAppSelector((state) => state.messages);
+  const { messagesByConversation, isLoading: messagesLoading } = useAppSelector((state) => state.messages);
   const { activeConversationId: activeConversation } = useAppSelector((state) => state.ui);
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -71,6 +72,7 @@ export default function MessagesPage() {
   const [isMobile, setIsMobile] = useState(false);
   
   const { pendingCount } = usePendingFriendRequests();
+  const [sendMessageWithFiles] = useSendMessageWithFilesMutation();
 
   const {
     data: currentUser,
@@ -126,6 +128,25 @@ export default function MessagesPage() {
         dispatch(fetchDirectMessages({ userId: conversationId }));
       }
     }
+  };
+
+  const handleSendWithFiles = async (content: string, files: File[]) => {
+    if (!activeConversation || !user) return;
+    const activeConv = conversations.find((c) => c.id === activeConversation);
+    if (!activeConv) return;
+
+    const fd = new FormData();
+    if (content) fd.append("content", content);
+    files.forEach((f) => fd.append("files", f));
+    if (activeConv.type === "group") {
+      fd.append("groupId", activeConversation);
+    } else {
+      fd.append("receiverId", activeConversation);
+    }
+
+    const result = await sendMessageWithFiles(fd).unwrap();
+    // Add to local store so it appears immediately
+    dispatch(addMessage({ conversationId: activeConversation, message: result.data ?? result }));
   };
 
   const handleSendMessage = (content: string) => {
@@ -379,6 +400,7 @@ export default function MessagesPage() {
             <MessageThread
               messages={currentMessages}
               currentUser={user}
+              isLoading={messagesLoading}
               otherUser={
                 activeConv.type === "direct"
                   ? { id: activeConv.id, username: activeConv.title, avatar: activeConv.avatar }
@@ -387,9 +409,10 @@ export default function MessagesPage() {
             />
 
             {/* Message Input */}
-            <div className="border-t border-border/30 bg-card/30 backdrop-blur-sm p-4">
+            <div className="border-t border-border/30 bg-card/30 backdrop-blur-sm px-4 py-3">
               <MessageInput
                 onSend={handleSendMessage}
+                onSendWithFiles={handleSendWithFiles}
                 onTyping={handleTyping}
                 placeholder={`Message ${activeConv.title}...`}
               />

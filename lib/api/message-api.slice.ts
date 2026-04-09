@@ -11,6 +11,16 @@ export const messageApiSlice = baseApiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Message'],
     }),
+
+    sendMessageWithFiles: builder.mutation({
+      query: (formData: FormData) => ({
+        url: '/messages/with-files',
+        method: 'POST',
+        body: formData,
+        formData: true,
+      }),
+      invalidatesTags: ['Message'],
+    }),
     
     getMessage: builder.query({
       query: (id) => `/messages/${id}`,
@@ -96,6 +106,7 @@ export const messageApiSlice = baseApiSlice.injectEndpoints({
 
 export const {
   useSendMessageMutation,
+  useSendMessageWithFilesMutation,
   useGetMessageQuery,
   useGetGroupMessagesQuery,
   useGetDirectMessagesQuery,

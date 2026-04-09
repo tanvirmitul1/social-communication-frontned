@@ -2,112 +2,81 @@ import { createApi, fetchBaseQuery, BaseQueryFn, FetchArgs, FetchBaseQueryError 
 import { env } from '@/config/env';
 import { storage } from '@/lib/utils/storage';
 import { STORAGE_KEYS } from '@/lib/constants';
+import { clearAuth } from '@/lib/store/slices/auth.slice';
 
-// Define types for refresh response
 interface RefreshResponse {
   success: boolean;
-  message?: string;
-  data?: {
-    accessToken: string;
-    refreshToken?: string;
-  };
+  data?: { accessToken: string; refreshToken?: string };
 }
 
-// Base query with authentication headers
+function cleanToken(token: string | null): string | null {
+  if (!token) return null;
+  if (token.startsWith('"') && token.endsWith('"')) return token.slice(1, -1);
+  return token;
+}
+
+function forceLogout(api: any) {
+  storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
+  storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
+  storage.remove(STORAGE_KEYS.USER);
+  api.dispatch(clearAuth());
+  if (typeof window !== 'undefined') window.location.href = '/login';
+}
+
 const baseQuery = fetchBaseQuery({
   baseUrl: env.api.baseUrl,
-  prepareHeaders: (headers, { getState }) => {
-    let token = storage.get<string>(STORAGE_KEYS.ACCESS_TOKEN);
-    
-    // Clean up the token if it has extra quotes
-    if (token && typeof token === 'string') {
-      // Remove surrounding quotes if present
-      if (token.startsWith('"') && token.endsWith('"') && token.length > 1) {
-        token = token.substring(1, token.length - 1);
-      }
-    }
-    
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-    headers.set('Content-Type', 'application/json');
+  prepareHeaders: (headers) => {
+    const token = cleanToken(storage.get<string>(STORAGE_KEYS.ACCESS_TOKEN));
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    // Do NOT set Content-Type here — let browser set it for FormData
     return headers;
   },
 });
 
-// Custom base query with refresh token logic
+const MAX_REFRESH_ATTEMPTS = 2;
+
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
   extraOptions
 ) => {
   let result = await baseQuery(args, api, extraOptions);
-  
-  // If we get a 401 error, try to refresh the token
-  if (result.error && result.error.status === 401) {
-    const refreshToken = storage.get<string>(STORAGE_KEYS.REFRESH_TOKEN);
-    
-    if (refreshToken) {
-      // Try to refresh the access token
-      const refreshResult = await baseQuery(
-        {
-          url: '/auth/refresh',
-          method: 'POST',
-          body: { refreshToken },
-        },
-        api,
-        extraOptions
-      );
-      
-      const refreshData = refreshResult.data as RefreshResponse | undefined;
-      if (refreshData && refreshData.success && refreshData.data) {
-        // Token refresh successful, update storage and retry original request
-        const { accessToken, refreshToken: newRefreshToken } = refreshData.data;
-        storage.set(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-        if (newRefreshToken) {
-          storage.set(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
-        }
-        
-        // Retry the original request with the new token
-        result = await baseQuery(args, api, extraOptions);
-      } else {
-        // Token refresh failed, logout the user
-        storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
-        storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
-        storage.remove(STORAGE_KEYS.USER);
-        
-        // You might want to redirect to login page here
-        // For now, we'll just return the original error
-        console.error('Token refresh failed, logging out user');
-      }
+  if (!result.error || result.error.status !== 401) return result;
+
+  // Try refresh up to MAX_REFRESH_ATTEMPTS times
+  for (let attempt = 0; attempt < MAX_REFRESH_ATTEMPTS; attempt++) {
+    const refreshToken = cleanToken(storage.get<string>(STORAGE_KEYS.REFRESH_TOKEN));
+    if (!refreshToken) { forceLogout(api); return result; }
+
+    const refreshResult = await baseQuery(
+      { url: '/auth/refresh', method: 'POST', body: { refreshToken } },
+      api,
+      extraOptions
+    );
+
+    const data = refreshResult.data as RefreshResponse | undefined;
+    if (data?.success && data.data?.accessToken) {
+      storage.set(STORAGE_KEYS.ACCESS_TOKEN, data.data.accessToken);
+      if (data.data.refreshToken) storage.set(STORAGE_KEYS.REFRESH_TOKEN, data.data.refreshToken);
+
+      // Retry original request with new token
+      result = await baseQuery(args, api, extraOptions);
+      if (!result.error || result.error.status !== 401) return result;
+      // Still 401 — loop and try refresh again
     } else {
-      // No refresh token available, logout the user
-      storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
-      storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
-      storage.remove(STORAGE_KEYS.USER);
-      
-      console.error('No refresh token available, logging out user');
+      // Refresh itself failed
+      break;
     }
   }
-  
+
+  // All attempts exhausted
+  forceLogout(api);
   return result;
 };
 
-// Define the base API slice
 export const baseApiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: [
-    'Auth',
-    'User', 
-    'Message',
-    'Conversation', 
-    'Group',
-    'Call',
-    'Post',
-    'Comment',
-    'FriendRequest',
-    'Friend'
-  ],
-  endpoints: () => ({}), // Empty endpoints - will be injected via injectEndpoints
+  tagTypes: ['Auth', 'User', 'Message', 'Conversation', 'Group', 'Call', 'Post', 'Comment', 'FriendRequest', 'Friend'],
+  endpoints: () => ({}),
 });
