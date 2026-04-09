@@ -77,12 +77,24 @@ export const feedApiSlice = baseApiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: 'Post', id }],
     }),
 
-    // Create post
+    // Create post (text only)
     createPost: builder.mutation<Post, CreatePostPayload>({
       query: (data) => ({
         url: '/posts',
         method: 'POST',
         body: data,
+      }),
+      transformResponse: (response: ApiResponse<Post>) => response.data!,
+      invalidatesTags: [{ type: 'Post', id: 'FEED' }],
+    }),
+
+    // Create post with file uploads
+    createPostWithFiles: builder.mutation<Post, FormData>({
+      query: (formData) => ({
+        url: '/posts/with-files',
+        method: 'POST',
+        body: formData,
+        formData: true,
       }),
       transformResponse: (response: ApiResponse<Post>) => response.data!,
       invalidatesTags: [{ type: 'Post', id: 'FEED' }],
@@ -418,6 +430,7 @@ export const {
   useGetUserPostsQuery,
   useGetPostQuery,
   useCreatePostMutation,
+  useCreatePostWithFilesMutation,
   useUpdatePostMutation,
   useDeletePostMutation,
   useReactToPostMutation,
