@@ -21,6 +21,7 @@ import {
 import { ReactionPicker } from "./reaction-picker";
 import { ReactionAnimation } from "./reaction-animation";
 import { CommentSection } from "./comment-section";
+import { Lightbox } from "@/components/messages/lightbox";
 import {
   MessageCircle,
   Share2,
@@ -29,12 +30,14 @@ import {
   Edit,
   Trash2,
   Flag,
+  Play,
+  Volume2,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils/format";
 import { formatRelativeTime, formatCount } from "@/lib/utils/feed-formatters";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Post } from "@/types/feed.types";
+import type { Post, MediaItem } from "@/types/feed.types";
 
 interface PostCardProps {
   post: Post;
@@ -162,44 +165,7 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* ─── Media grid ─── */}
       {mediaCount > 0 && (
-        <div
-          className={cn(
-            "grid gap-0.5 overflow-hidden",
-            mediaCount === 1 && "grid-cols-1",
-            mediaCount === 2 && "grid-cols-2",
-            mediaCount === 3 && "grid-cols-2",
-            mediaCount >= 4 && "grid-cols-2"
-          )}
-        >
-          {post.media.slice(0, 4).map((media, index) => {
-            const isFirstOfThree = mediaCount === 3 && index === 0;
-            const isOverlay = index === 3 && mediaCount > 4;
-
-            return (
-              <div
-                key={media.id || index}
-                className={cn(
-                  "relative overflow-hidden bg-muted",
-                  isFirstOfThree && "col-span-2",
-                  mediaCount === 1 ? "aspect-video" : "aspect-square"
-                )}
-              >
-                <img
-                  src={media.url}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                />
-                {isOverlay && (
-                  <div className="absolute inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center">
-                    <span className="text-white text-2xl font-bold">
-                      +{mediaCount - 4}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <MediaGrid media={post.media} />
       )}
 
       {/* ─── Stats row ─── */}
@@ -267,6 +233,83 @@ export function PostCard({ post }: PostCardProps) {
         </>
       )}
     </Card>
+  );
+}
+
+/* ─── Media grid ─── */
+function MediaGrid({ media }: { media: MediaItem[] }) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const count = media.length;
+
+  return (
+    <>
+      <div className={cn(
+        "grid gap-0.5 overflow-hidden",
+        count === 1 && "grid-cols-1",
+        count >= 2 && "grid-cols-2",
+      )}>
+        {media.slice(0, 4).map((item, index) => {
+          const isVideo = item.type === "VIDEO";
+          const isFirstOfThree = count === 3 && index === 0;
+          const isOverlay = index === 3 && count > 4;
+
+          return (
+            <div
+              key={item.id || index}
+              onClick={() => !isVideo && setLightboxIndex(index)}
+              className={cn(
+                "relative overflow-hidden bg-black group",
+                isFirstOfThree && "col-span-2",
+                count === 1 ? "aspect-video" : "aspect-square",
+                !isVideo && "cursor-pointer"
+              )}
+            >
+              {isVideo ? (
+                <video
+                  src={item.url}
+                  poster={item.thumbnail || undefined}
+                  controls
+                  preload="metadata"
+                  className="w-full h-full object-contain bg-black"
+                  onClick={e => e.stopPropagation()}
+                />
+              ) : (
+                <img
+                  src={item.thumbnail || item.url}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+              )}
+
+              {/* +N overlay */}
+              {isOverlay && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">+{count - 4}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Image lightbox */}
+      {lightboxIndex !== null && (() => {
+        const lightboxItems = media
+          .filter(m => m.type === "IMAGE")
+          .map(m => ({ type: "image" as const, url: m.url, thumbnail: m.thumbnail, filename: "image" }));
+        const imgIndex = media
+          .filter(m => m.type === "IMAGE")
+          .findIndex((_, i) => media.indexOf(media.filter(m => m.type === "IMAGE")[i]) === lightboxIndex);
+        return lightboxItems.length > 0 ? (
+          <Lightbox
+            files={lightboxItems}
+            initialIndex={Math.max(0, imgIndex)}
+            onClose={() => setLightboxIndex(null)}
+          />
+        ) : null;
+      })()}
+    </>
   );
 }
 
